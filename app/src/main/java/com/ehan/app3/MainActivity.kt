@@ -51,8 +51,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun Greeting(name: String, modifier: Modifier = Modifier) {
 	Text(
-	    text = name,
-        modifier = Modifier.weight(1f)
+	    text = name
     )
 }
 
