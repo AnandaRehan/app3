@@ -37,12 +37,9 @@ class MainActivity : ComponentActivity() {
         
         setContent {
             App3Theme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Template",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
+                Greeting(
+                    name = "Template"
+                )
             }
         }
     }
@@ -50,9 +47,17 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun Greeting(name: String, modifier: Modifier = Modifier) {
-	Text(
-	    text = name
-    )
+    Surface(
+        modifier = Modifier
+            .fillMaxSize()
+            .systemBarsPadding(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+	    Text(
+	        text = name
+        )
+    }
 }
 
 

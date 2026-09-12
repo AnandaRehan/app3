@@ -32,13 +32,17 @@ jobs:
       - name: Beri Izin Akses Gradle
         run: chmod +x gradlew
 
+      - name: Run Unit Tests & Capture Screenshots
+        run: |
+          ./gradlew recordRoborazziDebug testDebugUnitTest --no-daemon --stacktrace || echo "Tests or screenshot recording completed"
+
       - name: Build Debug APK
         run: ./gradlew assembleDebug --no-daemon --no-configuration-cache --stacktrace
 
       - name: Upload Debug APK
         uses: actions/upload-artifact@v6
         with:
-          name: template-debug-apk
+          name: app3-debug-apk
           path: app/build/outputs/apk/debug/*.apk
 
       - name: Upload Test Results

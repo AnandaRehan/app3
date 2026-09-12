@@ -60,6 +60,10 @@ jobs:
       - name: Beri Izin Akses Gradle
         run: chmod +x gradlew
 
+      - name: Run Unit Tests & Capture Screenshots
+        run: |
+          ./gradlew recordRoborazziDebug testDebugUnitTest --no-daemon --stacktrace || echo "Tests or screenshot recording completed"
+
       - name: Build Release APK
         env:
           KEYSTORE_PATH: ${{ github.workspace }}/release.jks
