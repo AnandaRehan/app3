@@ -36,7 +36,9 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         
         setContent {
-            App3Theme {
+            App3Theme(
+                darkTheme = true
+            ) {
                 Greeting(
                     name = "Template"
                 )
@@ -47,16 +49,23 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Surface(
-        modifier = Modifier
-            .fillMaxSize()
-            .systemBarsPadding(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-	    Text(
+    Scaffold { innerPadding ->
+        Surface(
+            modifier = modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+        )
+        Text(
 	        text = name
         )
+        Column(
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = name
+            )
+        }
     }
 }
 
