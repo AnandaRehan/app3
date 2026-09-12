@@ -54,17 +54,18 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
             modifier = modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-        )
-        Text(
-	        text = name
-        )
-        Column(
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = name
+	            text = name
             )
+            Column(
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = name
+                )
+            }
         }
     }
 }
