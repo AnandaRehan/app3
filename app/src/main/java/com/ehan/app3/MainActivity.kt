@@ -1,6 +1,8 @@
 package com.ehan.app3
 
 import android.os.Bundle
+import android.content.Context
+import android.content.SharedPreferences
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -18,6 +20,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.runtime.Composable
@@ -28,21 +31,32 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ehan.app3.ui.theme.App3Theme
+import com.ehan.app3.ui.theme.ThemeMode
+import com.ehan.app3.data.SettingsRepository
+import com.ehan.app3.ui.MainViewModel
 
 class MainActivity : ComponentActivity() {
+    private val viewmodel: MainViewModel by viewModels {
+        MainViewModel.provideFactory(application)
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        
         setContent {
+            val context: Context = LocalContext.current
+            val lifecycleOwner = LocalLifecycleOwner.current
+            val userPreferences by viewmodel.userPreferences.collectAsStateWithLifecycle(lifecycleOwner = lifecycleOwner)
+            val statusNotification by viewmodel.statusMessage.collectAsStateWithLifecycle(lifecycleOwner = lifecycleOwner)
             App3Theme(
-                darkTheme = true
+                darkTheme = userPreferences.darkTheme
             ) {
                 Greeting(
-                    name = "Template"
+                    name = "Template",
+                    viewmodel = viewmodel
                 )
             }
         }
@@ -50,16 +64,13 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
+fun Greeting(name: String, viewmodel: MainViewModel, modifier: Modifier = Modifier) {
     Scaffold { innerPadding ->
         Surface(
             modifier = modifier
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            Text(
-	            text = name
-            )
             Column(
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
@@ -67,6 +78,25 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
                 Text(
                     text = name
                 )
+                Button(
+                    onClick = {
+                        when (viewmodel.themeMode) {
+                            ThemeMode.DARK -> {
+                                viewmodel.setThemeMode(ThemeMode.LIGHT)
+                            }
+                            ThemeMode.LIGHT -> {
+                                viewmodel.setThemeMode(ThemeMode.SYSTEM)
+                            }
+                            else -> {
+                                viewmodel.setThemeMode(ThemeMode.DARK)
+                            }
+                        }
+                    }
+                ) {
+                    Text(
+                        text = "tema mode"
+                    )
+                }
             }
         }
     }
