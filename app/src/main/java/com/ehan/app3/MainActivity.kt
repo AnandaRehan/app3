@@ -86,14 +86,14 @@ fun Greeting(name: String, viewmodel: MainViewModel, modifier: Modifier = Modifi
                 Button(
                     onClick = {
                         when (userPreferences.themeMode) {
-                            ThemeMode.DARK -> {
-                                viewmodel.setThemeMode(ThemeMode.LIGHT)
+                            ThemeMode.DARK.label -> {
+                                viewmodel.setThemeMode((ThemeMode.LIGHT).label)
                             }
-                            ThemeMode.LIGHT -> {
-                                viewmodel.setThemeMode(ThemeMode.SYSTEM)
+                            ThemeMode.LIGHT.label -> {
+                                viewmodel.setThemeMode(ThemeMode.SYSTEM.label)
                             }
                             else -> {
-                                viewmodel.setThemeMode(ThemeMode.DARK)
+                                viewmodel.setThemeMode(ThemeMode.DARK.label)
                             }
                         }
                     }

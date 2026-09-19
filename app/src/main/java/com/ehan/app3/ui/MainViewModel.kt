@@ -39,10 +39,10 @@ class MainViewModel(
     val statusMessage: StateFlow<UiNotification?> = _statusMessage.asStateFlow()
 
     val darkTheme: Boolean = when (userPreferences.themeMode) {
-        ThemeMode.DARK -> {
+        ThemeMode.DARK.label -> {
             true
         }
-        ThemeMode.LIGHT -> {
+        ThemeMode.LIGHT.label -> {
             false
         }
         else -> {
@@ -60,7 +60,7 @@ class MainViewModel(
         }
     }
 
-    fun setThemeMode(theme: ThemeMode) {
+    fun setThemeMode(theme: String) {
         viewModelScope.launch {
             repository.setThemeMode(theme)
             _statusMessage.value = UiNotification(message = "Theme Mode Diubah ke $theme!")

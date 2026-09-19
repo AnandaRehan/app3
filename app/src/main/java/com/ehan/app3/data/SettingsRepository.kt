@@ -49,7 +49,7 @@ data class UserPreferences(
     val notificationsEnabled: Boolean = true,
     val counter: Int = 0,
     val accentColor: String = "Indigo",
-    val themeMode: ThemeMode = ThemeMode.SYSTEM
+    val themeMode: String = ThemeMode.SYSTEM.label
 )
 
 class UserPreferencesRepository(
@@ -73,12 +73,12 @@ class UserPreferencesRepository(
             }
         }
         .map { preferences ->
-            val username = preferences[PreferencesKeys.USERNAME] ?: "Pengguna Android"
-            val isDarkTheme = preferences[PreferencesKeys.DARK_THEME] ?: false
-            val notificationsEnabled = preferences[PreferencesKeys.NOTIFICATIONS_ENABLED] ?: true
-            val counter = preferences[PreferencesKeys.COUNTER] ?: 0
-            val accentColor = preferences[PreferencesKeys.ACCENT_COLOR] ?: "Indigo"
-            val themeMode = preferences[PreferencesKeys.THEMEMODE] ?: ThemeMode.SYSTEM
+            val username: String = preferences[PreferencesKeys.USERNAME] ?: "Pengguna Android"
+            val isDarkTheme: Boolean = preferences[PreferencesKeys.DARK_THEME] ?: false
+            val notificationsEnabled: Boolean = preferences[PreferencesKeys.NOTIFICATIONS_ENABLED] ?: true
+            val counter: Int = preferences[PreferencesKeys.COUNTER] ?: 0
+            val accentColor: String = preferences[PreferencesKeys.ACCENT_COLOR] ?: "Indigo"
+            val themeMode: String = preferences[PreferencesKeys.THEMEMODE] ?: (ThemeMode.SYSTEM).label
             UserPreferences(
                 username = username,
                 isDarkTheme = isDarkTheme,
@@ -95,7 +95,7 @@ class UserPreferencesRepository(
         }
     }
 
-    suspend fun setThemeMode(theme: ThemeMode) {
+    suspend fun setThemeMode(theme: String) {
         dataStore.edit { preferences ->
             preferences[PreferencesKeys.THEMEMODE] = theme
         }
