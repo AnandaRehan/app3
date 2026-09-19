@@ -53,7 +53,7 @@ class MainActivity : ComponentActivity() {
             val userPreferences by viewmodel.userPreferences.collectAsStateWithLifecycle(lifecycleOwner = lifecycleOwner)
             val statusNotification by viewmodel.statusMessage.collectAsStateWithLifecycle(lifecycleOwner = lifecycleOwner)
             App3Theme(
-                darkTheme = userPreferences.isDarkTheme
+                darkTheme = viewmodel.darkTheme
             ) {
                 Greeting(
                     name = "Template",
@@ -66,6 +66,10 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun Greeting(name: String, viewmodel: MainViewModel, modifier: Modifier = Modifier) {
+    val context: Context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val userPreferences by viewmodel.userPreferences.collectAsStateWithLifecycle(lifecycleOwner = lifecycleOwner)
+    val statusNotification by viewmodel.statusMessage.collectAsStateWithLifecycle(lifecycleOwner = lifecycleOwner)
     Scaffold { innerPadding ->
         Surface(
             modifier = modifier
@@ -81,7 +85,7 @@ fun Greeting(name: String, viewmodel: MainViewModel, modifier: Modifier = Modifi
                 )
                 Button(
                     onClick = {
-                        when (viewmodel.themeMode) {
+                        when (userPreferences.themeMode) {
                             ThemeMode.DARK -> {
                                 viewmodel.setThemeMode(ThemeMode.LIGHT)
                             }
@@ -108,7 +112,10 @@ fun Greeting(name: String, viewmodel: MainViewModel, modifier: Modifier = Modifi
 @Preview(showBackground = true)
 @Composable
 fun GreetingPreview() {
+    private val viewmodel: MainViewModel by viewModels {
+        MainViewModel.provideFactory(application)
+    }
     App3Theme {
-        Greeting("Android")
+        Greeting("Android", viewmodel)
     }
 }
