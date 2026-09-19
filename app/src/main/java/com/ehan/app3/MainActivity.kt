@@ -112,10 +112,21 @@ fun Greeting(name: String, viewmodel: MainViewModel, modifier: Modifier = Modifi
 @Preview(showBackground = true)
 @Composable
 fun GreetingPreview() {
-    private val viewmodel: MainViewModel by viewModels {
-        MainViewModel.provideFactory(application)
-    }
     App3Theme {
-        Greeting("Android", viewmodel)
+        Scaffold { innerPadding ->
+        Surface(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+        ) {
+            Column(
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Android"
+                )
+            }
+        }
     }
 }
