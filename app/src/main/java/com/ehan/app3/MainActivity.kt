@@ -53,7 +53,7 @@ class MainActivity : ComponentActivity() {
             val userPreferences by viewmodel.userPreferences.collectAsStateWithLifecycle(lifecycleOwner = lifecycleOwner)
             val statusNotification by viewmodel.statusMessage.collectAsStateWithLifecycle(lifecycleOwner = lifecycleOwner)
             App3Theme(
-                darkTheme = userPreferences.darkTheme
+                darkTheme = userPreferences.isDarkTheme
             ) {
                 Greeting(
                     name = "Template",
