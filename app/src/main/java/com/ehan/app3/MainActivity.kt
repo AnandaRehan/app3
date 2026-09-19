@@ -32,11 +32,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ehan.app3.ui.theme.App3Theme
 import com.ehan.app3.ui.theme.ThemeMode
-import com.ehan.app3.data.SettingsRepository
+import com.ehan.app3.data.UserPreferencesRepository
 import com.ehan.app3.ui.MainViewModel
 
 class MainActivity : ComponentActivity() {
