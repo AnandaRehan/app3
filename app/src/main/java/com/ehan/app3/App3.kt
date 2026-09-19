@@ -16,7 +16,7 @@ val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "us
  *     android:name=".Application"
  *     ... >
  */
-class Kalkulator : Application() {
+class App3 : Application() {
 
     lateinit var userPreferencesRepository: UserPreferencesRepository
         private set
@@ -28,7 +28,7 @@ class Kalkulator : Application() {
     }
 
     companion object {
-        lateinit var instance: Kalkulator
+        lateinit var instance: App3
             private set
     }
 }

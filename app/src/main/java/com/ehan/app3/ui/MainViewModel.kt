@@ -24,7 +24,7 @@ data class UiNotification(
 
 class MainViewModel(
     application: Application,
-    private val repository: UserPreferencesRepository = (application as Kalkulator).userPreferencesRepository
+    private val repository: UserPreferencesRepository = (application as App3).userPreferencesRepository
 ) : AndroidViewModel(application) {
 
     // Mengambil preferences secara reaktif dari DataStore melalui Flow
