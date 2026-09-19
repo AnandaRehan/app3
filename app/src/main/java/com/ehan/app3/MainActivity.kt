@@ -114,18 +114,19 @@ fun Greeting(name: String, viewmodel: MainViewModel, modifier: Modifier = Modifi
 fun GreetingPreview() {
     App3Theme {
         Scaffold { innerPadding ->
-        Surface(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-        ) {
-            Column(
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
+            Surface(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
             ) {
-                Text(
-                    text = "Android"
-                )
+                Column(
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "Android"
+                    )
+                }
             }
         }
     }
