@@ -5,7 +5,6 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import androidx.compose.foundation.isSystemInDarkTheme
 import com.ehan.app3.App3
 import com.ehan.app3.data.UserPreferences
 import com.ehan.app3.data.UserPreferencesRepository
