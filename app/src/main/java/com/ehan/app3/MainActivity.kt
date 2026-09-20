@@ -57,10 +57,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.ehan.app3.data.ChatDatabase
 import com.ehan.app3.ui.theme.App3Theme
 import com.ehan.app3.ui.theme.ThemeMode
 import com.ehan.app3.data.UserPreferencesRepository
 import com.ehan.app3.ui.MainViewModel
+import com.ehan.app3.ui.screen.ChatScreen
 
 class MainActivity : ComponentActivity() {
     private val viewmodel: MainViewModel by viewModels {
@@ -69,11 +72,18 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        val database = ChatDatabase.getDatabase(this)
+
         setContent {
             val context: Context = LocalContext.current
             val lifecycleOwner = LocalLifecycleOwner.current
             val userPreferences by viewmodel.userPreferences.collectAsStateWithLifecycle(lifecycleOwner = lifecycleOwner)
             val statusNotification by viewmodel.statusMessage.collectAsStateWithLifecycle(lifecycleOwner = lifecycleOwner)
+            val chatViewModel: ChatViewModel = viewModel(
+                factory = ChatViewModelFactory(
+                    database.chatDao()
+                )
+            )
             App3Theme(
                 darkTheme = when (userPreferences.themeMode) {
                     ThemeMode.LIGHT.label -> {
@@ -89,7 +99,8 @@ class MainActivity : ComponentActivity() {
             ) {
                 Greeting(
                     name = "Template",
-                    viewmodel = viewmodel
+                    viewmodel = viewmodel,
+                    viewModel = chatViewModel
                 )
             }
         }
@@ -97,7 +108,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun Greeting(name: String, viewmodel: MainViewModel, modifier: Modifier = Modifier) {
+fun Greeting(name: String, viewmodel: MainViewModel, viewModel: ChatViewModel, modifier: Modifier = Modifier) {
     val context: Context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val userPreferences by viewmodel.userPreferences.collectAsStateWithLifecycle(lifecycleOwner = lifecycleOwner)
@@ -108,7 +119,9 @@ fun Greeting(name: String, viewmodel: MainViewModel, modifier: Modifier = Modifi
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            ChatScreen()
+            ChatScreen(
+                viewModel = viewModel
+            )
             /**
             Column(
                 verticalArrangement = Arrangement.Center,
@@ -138,230 +151,6 @@ fun Greeting(name: String, viewmodel: MainViewModel, modifier: Modifier = Modifi
                 }
             }*/
         }
-    }
-}
-
-data class ChatMessage(
-    val text: String,
-    val isBot: Boolean
-)
-
-@Composable
-fun ChatScreen() {
-
-    var inputText by rememberSaveable {
-        mutableStateOf("")
-    }
-
-    val messages = remember {
-        mutableStateListOf(
-            ChatMessage(
-                text = "Halo! Saya bot sederhana 🤖",
-                isBot = true
-            ),
-            ChatMessage(
-                text = "Ketik \"menu\" untuk melihat perintah.",
-                isBot = true
-            )
-        )
-    }
-
-    val listState = rememberLazyListState()
-    val scope = rememberCoroutineScope()
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFFF5F5F5))
-    ) {
-
-        // Header
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(Color(0xFF075E54))
-                .padding(
-                    horizontal = 16.dp,
-                    vertical = 12.dp
-                ),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-
-            Box(
-                modifier = Modifier
-                    .size(42.dp)
-                    .background(
-                        Color.White,
-                        CircleShape
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "B",
-                    fontSize = 20.sp,
-                    color = Color(0xFF075E54)
-                )
-            }
-
-            Column(
-                modifier = Modifier.padding(start = 12.dp)
-            ) {
-                Text(
-                    text = "Bot Chat",
-                    color = Color.White,
-                    fontSize = 18.sp
-                )
-
-                Text(
-                    text = "● Online",
-                    color = Color(0xFFB9F6CA),
-                    fontSize = 13.sp
-                )
-            }
-        }
-
-        // Daftar pesan
-        LazyColumn(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
-                .padding(8.dp),
-            state = listState,
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-
-            items(messages) { message ->
-
-                MessageBubble(
-                    message = message
-                )
-            }
-        }
-
-        // Input
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(Color.White)
-                .padding(8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-
-            OutlinedTextField(
-                value = inputText,
-                onValueChange = {
-                    inputText = it
-                },
-                modifier = Modifier.weight(1f),
-                placeholder = {
-                    Text("Ketik pesan...")
-                },
-                maxLines = 3
-            )
-
-            IconButton(
-                onClick = {
-
-                    val text = inputText.trim()
-
-                    if (text.isNotEmpty()) {
-
-                        // Pesan user
-                        messages.add(
-                            ChatMessage(
-                                text = text,
-                                isBot = false
-                            )
-                        )
-
-                        // Balasan bot
-                        messages.add(
-                            ChatMessage(
-                                text = botReply(text),
-                                isBot = true
-                            )
-                        )
-
-                        inputText = ""
-
-                        scope.launch {
-                            listState.animateScrollToItem(
-                                messages.size - 1
-                            )
-                        }
-                    }
-                }
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Send,
-                    contentDescription = "Kirim"
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun MessageBubble(
-    message: ChatMessage
-) {
-
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = if (message.isBot) {
-            Arrangement.Start
-        } else {
-            Arrangement.End
-        }
-    ) {
-
-        Box(
-            modifier = Modifier
-                .background(
-                    color = if (message.isBot) {
-                        Color.White
-                    } else {
-                        Color(0xFFD9FDD3)
-                    },
-                    shape = RoundedCornerShape(12.dp)
-                )
-                .padding(
-                    horizontal = 14.dp,
-                    vertical = 10.dp
-                )
-        ) {
-
-            Text(
-                text = message.text,
-                fontSize = 15.sp
-            )
-        }
-    }
-}
-
-fun botReply(message: String): String {
-
-    return when (message.lowercase().trim()) {
-
-        "halo",
-        "hai",
-        "hello" ->
-            "Halo! Ada yang bisa saya bantu? 🤖"
-
-        "menu" ->
-            """
-            Menu Bot:
-
-            1. halo
-            2. menu
-            3. info
-            """.trimIndent()
-
-        "info" ->
-            "Saya adalah bot Android sederhana yang dibuat menggunakan Kotlin dan Jetpack Compose."
-
-        else ->
-            "Maaf, saya belum mengerti pesan itu."
     }
 }
 
