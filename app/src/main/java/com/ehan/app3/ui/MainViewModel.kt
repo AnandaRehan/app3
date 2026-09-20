@@ -46,7 +46,7 @@ class MainViewModel(
             false
         }
         else -> {
-            isSystemInDarkTheme ?: false
+            isSystemInDarkTheme() ?: false
         }
     }
 

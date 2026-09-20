@@ -18,8 +18,8 @@ import androidx.core.view.WindowCompat
 enum class ThemeMode(
     val label: String
 ) {
-    SYSTEM("System default")
-    DARK("Dark")
+    SYSTEM("System default"),
+    DARK("Dark"),
     LIGHT('Light')
 }
 
