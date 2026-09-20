@@ -22,6 +22,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -52,11 +53,22 @@ fun ChatScreen(
         mutableStateOf("")
     }
 
+    val isTyping by viewModel.isTyping.collectAsState()
+
     // Network monitor
     val context = LocalContext.current
 
     val networkMonitor = remember {
         NetworkMonitor(context)
+    }
+
+    DisposableEffect(networkMonitor) {
+
+        networkMonitor.start()
+
+        onDispose {
+            networkMonitor.stop()
+        }
     }
 
     val isOnline by networkMonitor.isOnline.collectAsState()
@@ -102,6 +114,10 @@ fun ChatScreen(
                     message = message
                 )
             }
+        }
+
+        if (isTyping) {
+            TypingIndicator()
         }
 
         MessageInput(
@@ -249,6 +265,34 @@ fun MessageInput(
             Icon(
                 imageVector = Icons.Default.Send,
                 contentDescription = "Kirim"
+            )
+        }
+    }
+}
+
+@Composable
+fun TypingIndicator() {
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(
+                horizontal = 14.dp,
+                vertical = 6.dp
+            )
+    ) {
+
+        Surface(
+            color = Color.White,
+            shape = RoundedCornerShape(12.dp)
+        ) {
+
+            Text(
+                text = "Bot sedang mengetik...",
+                modifier = Modifier.padding(
+                    horizontal = 14.dp,
+                    vertical = 10.dp
+                )
             )
         }
     }

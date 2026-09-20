@@ -8,7 +8,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-class NetworkMonitor(context: Context) {
+class NetworkMonitor(
+    context: Context
+) {
 
     private val connectivityManager =
         context.getSystemService(
@@ -22,11 +24,11 @@ class NetworkMonitor(context: Context) {
     val isOnline: StateFlow<Boolean> =
         _isOnline.asStateFlow()
 
-    private val callback =
+    private val networkCallback =
         object : ConnectivityManager.NetworkCallback() {
 
             override fun onAvailable(network: Network) {
-                _isOnline.value = true
+                _isOnline.value = checkInternet()
             }
 
             override fun onLost(network: Network) {
@@ -34,11 +36,24 @@ class NetworkMonitor(context: Context) {
             }
         }
 
-    init {
+    fun start() {
 
         connectivityManager.registerDefaultNetworkCallback(
-            callback
+            networkCallback
         )
+
+        _isOnline.value = checkInternet()
+    }
+
+    fun stop() {
+
+        try {
+            connectivityManager.unregisterNetworkCallback(
+                networkCallback
+            )
+        } catch (_: Exception) {
+            // Callback sudah tidak terdaftar.
+        }
     }
 
     private fun checkInternet(): Boolean {
@@ -54,9 +69,5 @@ class NetworkMonitor(context: Context) {
         return capabilities.hasCapability(
             NetworkCapabilities.NET_CAPABILITY_INTERNET
         )
-    }
-
-    fun stop() {
-        connectivityManager.unregisterNetworkCallback(callback)
     }
 }

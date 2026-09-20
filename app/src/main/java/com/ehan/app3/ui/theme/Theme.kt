@@ -72,7 +72,7 @@ private val LightColorScheme = lightColorScheme(
 @Composable
 fun App3Theme(
     darkTheme: Boolean = false,
-    dynamicColor: Boolean = true,
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val context = LocalContext.current

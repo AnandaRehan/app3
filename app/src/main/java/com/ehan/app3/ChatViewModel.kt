@@ -5,8 +5,11 @@ import androidx.lifecycle.viewModelScope
 import com.ehan.app3.bot.BotEngine
 import com.ehan.app3.data.ChatDao
 import com.ehan.app3.data.ChatMessage
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -24,6 +27,12 @@ class ChatViewModel(
                 initialValue = emptyList()
             )
 
+    private val _isTyping =
+        MutableStateFlow(false)
+
+    val isTyping: StateFlow<Boolean> =
+        _isTyping.asStateFlow()
+
     fun sendMessage(text: String) {
 
         val message = text.trim()
@@ -40,16 +49,25 @@ class ChatViewModel(
                 )
             )
 
-            // Buat balasan bot
+            // Bot sedang mengetik
+            _isTyping.value = true
+
+            // Simulasi proses berpikir bot
+            delay(700)
+
+            // Buat balasan
             val reply = botEngine.reply(message)
 
-            // Simpan balasan bot
+            // Simpan balasan
             chatDao.insertMessage(
                 ChatMessage(
                     text = reply,
                     isBot = true
                 )
             )
+
+            // Bot selesai mengetik
+            _isTyping.value = false
         }
     }
 
