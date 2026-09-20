@@ -2,6 +2,7 @@ package com.ehan.app3
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.ehan.app3.bot.BotEngine
 import com.ehan.app3.data.ChatDao
 import com.ehan.app3.data.ChatMessage
 import kotlinx.coroutines.flow.SharingStarted

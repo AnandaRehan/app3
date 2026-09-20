@@ -1,4 +1,4 @@
-package com.ehan.models
+package com.ehan.app3.models
 
 import android.content.Context
 import android.net.ConnectivityManager
