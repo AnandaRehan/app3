@@ -153,7 +153,7 @@ fun ChatScreen() {
         mutableStateOf("")
     }
 
-    val messages = rememberSaveable {
+    val messages = remember {
         mutableStateListOf(
             ChatMessage(
                 text = "Halo! Saya bot sederhana 🤖",
