@@ -20,7 +20,7 @@ enum class ThemeMode(
 ) {
     SYSTEM("System default"),
     DARK("Dark"),
-    LIGHT('Light')
+    LIGHT('Light');
 }
 
 private val DarkColorScheme = darkColorScheme(

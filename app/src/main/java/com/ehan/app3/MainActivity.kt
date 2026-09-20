@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.isSystemInDarkTheme
 // import androidx.compose.foundation.layout.weight
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Surface
@@ -53,7 +54,17 @@ class MainActivity : ComponentActivity() {
             val userPreferences by viewmodel.userPreferences.collectAsStateWithLifecycle(lifecycleOwner = lifecycleOwner)
             val statusNotification by viewmodel.statusMessage.collectAsStateWithLifecycle(lifecycleOwner = lifecycleOwner)
             App3Theme(
-                darkTheme = viewmodel.darkTheme
+                darkTheme = when (userPreferences.themeMode) {
+                    ThemeMode.LIGHT.label -> {
+                        false
+                    }
+                    ThemeMode.DARK.label -> {
+                        true
+                    }
+                    else -> {
+                        isSystemInDarkTheme() ?: false
+                    }
+                }
             ) {
                 Greeting(
                     name = "Template",

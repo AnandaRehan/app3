@@ -95,7 +95,18 @@ class UserPreferencesRepository(
         }
     }
 
-    suspend fun setThemeMode(theme: String) {
+    suspend fun setThemeMode(_theme: String) {
+        var theme: String = when (_theme) {
+            ThemeMode.LIGHT.label -> {
+                ThemeMode.LIGHT.label
+            }
+            ThemeMode.DARK.label -> {
+                ThemeMode.DARK.label
+            }
+            else -> {
+                ThemeMode.SYSTEM.label
+            }
+        }
         dataStore.edit { preferences ->
             preferences[PreferencesKeys.THEMEMODE] = theme
         }

@@ -38,18 +38,6 @@ class MainViewModel(
     private val _statusMessage = MutableStateFlow<UiNotification?>(null)
     val statusMessage: StateFlow<UiNotification?> = _statusMessage.asStateFlow()
 
-    val darkTheme: Boolean = when (userPreferences.themeMode) {
-        ThemeMode.DARK.label -> {
-            true
-        }
-        ThemeMode.LIGHT.label -> {
-            false
-        }
-        else -> {
-            isSystemInDarkTheme() ?: false
-        }
-    }
-
     fun setUsername(newUsername: String) {
         val trimmed = newUsername.trim()
         if (trimmed.isNotEmpty()) {
