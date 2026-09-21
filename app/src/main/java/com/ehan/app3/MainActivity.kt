@@ -153,7 +153,7 @@ fun Greeting(name: String, viewmodel: MainViewModel, viewModel: ChatViewModel, m
                 }
             }*/
       //  }
-    }
+  //  }
 }
 
 @Preview(showBackground = true)
