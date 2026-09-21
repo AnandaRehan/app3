@@ -115,16 +115,15 @@ fun Greeting(name: String, viewmodel: MainViewModel, viewModel: ChatViewModel, m
     val lifecycleOwner = LocalLifecycleOwner.current
     val userPreferences by viewmodel.userPreferences.collectAsStateWithLifecycle(lifecycleOwner = lifecycleOwner)
     val statusNotification by viewmodel.statusMessage.collectAsStateWithLifecycle(lifecycleOwner = lifecycleOwner)
-    ChatScreen(
-        viewModel = viewModel
-    )
-    /**Scaffold { innerPadding ->
+    Scaffold { innerPadding ->
         Surface(
             modifier = modifier
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            
+            ChatScreen(
+                viewModel = viewModel
+            )
             /**
             Column(
                 verticalArrangement = Arrangement.Center,
@@ -154,7 +153,7 @@ fun Greeting(name: String, viewmodel: MainViewModel, viewModel: ChatViewModel, m
                 }
             }*/
         }
-    }*/
+    }
 }
 
 @Preview(showBackground = true)

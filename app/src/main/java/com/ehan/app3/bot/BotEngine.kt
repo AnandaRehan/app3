@@ -16,10 +16,14 @@ class BotEngine {
                 1. halo
                 2. menu
                 3. info
+                4. tes
                 """.trimIndent()
 
             "info" ->
                 "Saya adalah bot Android sederhana menggunakan Kotlin dan Jetpack Compose."
+
+            "tes" ->
+                "Bot sudah aktif!"
 
             else ->
                 "Maaf, saya belum mengerti pesan itu."
