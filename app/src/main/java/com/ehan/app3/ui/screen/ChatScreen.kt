@@ -1,70 +1,53 @@
-package com.ehan.app3.ui.screen
+package com.example.whatsappbot
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Surface
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.ehan.app3.ChatViewModel
-import com.ehan.app3.data.ChatMessage
-import com.ehan.app3.models.NetworkMonitor
 
 @Composable
 fun ChatScreen(
     viewModel: ChatViewModel
 ) {
-
-    // Pesan dari Room
-    val messages by viewModel.messages.collectAsState()
-
-    // State input
-    var inputText by rememberSaveable {
-        mutableStateOf("")
-    }
-
-    val isTyping by viewModel.isTyping.collectAsState()
-
-    // Network monitor
     val context = LocalContext.current
 
     val networkMonitor = remember {
-        NetworkMonitor(context)
+        NetworkMonitor(
+            context.applicationContext
+        )
     }
 
     DisposableEffect(networkMonitor) {
-
         networkMonitor.start()
 
         onDispose {
@@ -73,66 +56,88 @@ fun ChatScreen(
     }
 
     val isOnline by networkMonitor.isOnline.collectAsState()
+    val messages by viewModel.messages.collectAsState()
+    val isTyping by viewModel.isTyping.collectAsState()
+
+    var inputText by rememberSaveable {
+        mutableStateOf("")
+    }
+
+    // Kirim status jaringan ke ViewModel
+    LaunchedEffect(isOnline) {
+        viewModel.updateNetworkStatus(isOnline)
+    }
 
     val listState = rememberLazyListState()
 
-    // Scroll otomatis ke pesan terbaru
     LaunchedEffect(messages.size) {
-
         if (messages.isNotEmpty()) {
-
             listState.animateScrollToItem(
                 messages.lastIndex
             )
         }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFFF5F5F5))
-    ) {
+    Scaffold(
+        topBar = {
+            ChatHeader(
+                isOnline = isOnline
+            )
+        },
+        bottomBar = {
+            MessageInput(
+                text = inputText,
+                onTextChange = {
+                    inputText = it
+                },
+                onSend = {
+                    if (inputText.isNotBlank()) {
+                        viewModel.sendMessage(inputText)
+                        inputText = ""
+                    }
+                }
+            )
+        }
+    ) { innerPadding ->
 
-        ChatHeader(
-            isOnline = isOnline
-        )
-
-        LazyColumn(
+        Surface(
             modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
-                .padding(8.dp),
-            state = listState,
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+                .fillMaxSize()
+                .padding(innerPadding)
         ) {
 
-            items(
-                items = messages,
-                key = { it.id }
-            ) { message ->
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 12.dp),
+                state = listState,
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
 
-                MessageBubble(
-                    message = message
-                )
+                items(
+                    items = messages,
+                    key = { it.id }
+                ) { message ->
+
+                    MessageBubble(
+                        message = message
+                    )
+                }
+
+                if (isTyping) {
+                    item {
+                        Text(
+                            text = "Bot sedang mengetik...",
+                            modifier = Modifier.padding(
+                                start = 8.dp,
+                                bottom = 8.dp
+                            ),
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                }
             }
         }
-
-        if (isTyping) {
-            TypingIndicator()
-        }
-
-        MessageInput(
-            text = inputText,
-            onTextChange = {
-                inputText = it
-            },
-            onSend = {
-
-                viewModel.sendMessage(inputText)
-
-                inputText = ""
-            }
-        )
     }
 }
 
@@ -140,43 +145,17 @@ fun ChatScreen(
 fun ChatHeader(
     isOnline: Boolean
 ) {
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color(0xFF075E54))
-            .padding(
-                horizontal = 16.dp,
-                vertical = 12.dp
-            ),
-        verticalAlignment = Alignment.CenterVertically
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = Color(0xFF075E54)
     ) {
-
-        Box(
-            modifier = Modifier
-                .size(42.dp)
-                .background(
-                    Color.White,
-                    CircleShape
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-
-            Text(
-                text = "B",
-                color = Color(0xFF075E54),
-                fontSize = 20.sp
-            )
-        }
-
         Column(
-            modifier = Modifier.padding(start = 12.dp)
+            modifier = Modifier.padding(16.dp)
         ) {
-
             Text(
-                text = "Bot Chat",
+                text = "WhatsApp Bot",
                 color = Color.White,
-                fontSize = 18.sp
+                style = MaterialTheme.typography.titleLarge
             )
 
             Text(
@@ -185,12 +164,8 @@ fun ChatHeader(
                 } else {
                     "● Offline"
                 },
-                color = if (isOnline) {
-                    Color(0xFFB9F6CA)
-                } else {
-                    Color.LightGray
-                },
-                fontSize = 13.sp
+                color = Color.White,
+                style = MaterialTheme.typography.bodySmall
             )
         }
     }
@@ -198,9 +173,8 @@ fun ChatHeader(
 
 @Composable
 fun MessageBubble(
-    message: ChatMessage
+    message: com.example.whatsappbot.data.ChatMessage
 ) {
-
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = if (message.isBot) {
@@ -210,25 +184,20 @@ fun MessageBubble(
         }
     ) {
 
-        Box(
-            modifier = Modifier
-                .background(
-                    color = if (message.isBot) {
-                        Color.White
-                    } else {
-                        Color(0xFFD9FDD3)
-                    },
-                    shape = RoundedCornerShape(12.dp)
-                )
-                .padding(
-                    horizontal = 14.dp,
-                    vertical = 10.dp
-                )
+        Surface(
+            shape = RoundedCornerShape(12.dp),
+            color = if (message.isBot) {
+                Color.White
+            } else {
+                Color(0xFFD9FDD3)
+            }
         ) {
-
             Text(
                 text = message.text,
-                style = MaterialTheme.typography.bodyMedium
+                modifier = Modifier.padding(
+                    horizontal = 12.dp,
+                    vertical = 8.dp
+                )
             )
         }
     }
@@ -240,61 +209,36 @@ fun MessageInput(
     onTextChange: (String) -> Unit,
     onSend: () -> Unit
 ) {
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color.White)
-            .padding(8.dp),
-        verticalAlignment = Alignment.CenterVertically
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        tonalElevation = 3.dp
     ) {
-
-        OutlinedTextField(
-            value = text,
-            onValueChange = onTextChange,
-            modifier = Modifier.weight(1f),
-            placeholder = {
-                Text("Ketik pesan...")
-            },
-            maxLines = 3
-        )
-
-        IconButton(
-            onClick = onSend
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
 
-            Icon(
-                imageVector = Icons.Default.Send,
-                contentDescription = "Kirim"
+            TextField(
+                value = text,
+                onValueChange = onTextChange,
+                modifier = Modifier.weight(1f),
+                placeholder = {
+                    Text("Tulis pesan...")
+                },
+                singleLine = true
             )
-        }
-    }
-}
 
-@Composable
-fun TypingIndicator() {
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(
-                horizontal = 14.dp,
-                vertical = 6.dp
-            )
-    ) {
-
-        Surface(
-            color = Color.White,
-            shape = RoundedCornerShape(12.dp)
-        ) {
-
-            Text(
-                text = "Bot sedang mengetik...",
-                modifier = Modifier.padding(
-                    horizontal = 14.dp,
-                    vertical = 10.dp
+            IconButton(
+                onClick = onSend,
+                enabled = text.isNotBlank()
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Send,
+                    contentDescription = "Kirim"
                 )
-            )
+            }
         }
     }
 }

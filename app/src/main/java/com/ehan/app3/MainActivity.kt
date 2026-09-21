@@ -79,11 +79,6 @@ class MainActivity : ComponentActivity() {
             val lifecycleOwner = LocalLifecycleOwner.current
             val userPreferences by viewmodel.userPreferences.collectAsStateWithLifecycle(lifecycleOwner = lifecycleOwner)
             val statusNotification by viewmodel.statusMessage.collectAsStateWithLifecycle(lifecycleOwner = lifecycleOwner)
-            val chatViewModel: ChatViewModel = viewModel(
-                factory = ChatViewModelFactory(
-                    database.chatDao()
-                )
-            )
             App3Theme(
                 darkTheme = when (userPreferences.themeMode) {
                     ThemeMode.LIGHT.label -> {
@@ -97,6 +92,13 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             ) {
+                val chatViewModel: ChatViewModel =
+                    viewModel(
+                        factory = ChatViewModelFactory(
+                            chatDao = database.chatDao(),
+                            context = applicationContext
+                        )
+                    )
                 Greeting(
                     name = "Template",
                     viewmodel = viewmodel,
@@ -113,15 +115,16 @@ fun Greeting(name: String, viewmodel: MainViewModel, viewModel: ChatViewModel, m
     val lifecycleOwner = LocalLifecycleOwner.current
     val userPreferences by viewmodel.userPreferences.collectAsStateWithLifecycle(lifecycleOwner = lifecycleOwner)
     val statusNotification by viewmodel.statusMessage.collectAsStateWithLifecycle(lifecycleOwner = lifecycleOwner)
-    Scaffold { innerPadding ->
+    ChatScreen(
+        viewModel = viewModel
+    )
+    /**Scaffold { innerPadding ->
         Surface(
             modifier = modifier
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            ChatScreen(
-                viewModel = viewModel
-            )
+            
             /**
             Column(
                 verticalArrangement = Arrangement.Center,
@@ -151,7 +154,7 @@ fun Greeting(name: String, viewmodel: MainViewModel, viewModel: ChatViewModel, m
                 }
             }*/
         }
-    }
+    }*/
 }
 
 @Preview(showBackground = true)
