@@ -72,7 +72,7 @@ private val LightColorScheme = lightColorScheme(
 @Composable
 fun App3Theme(
     darkTheme: Boolean = false,
-    dynamicColor: Boolean = false,
+    dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
     val context = LocalContext.current
@@ -85,17 +85,19 @@ fun App3Theme(
     }
 
     val view = LocalView.current
-    if (!view.isInEditMode) {
-        SideEffect {
-            val window = (view.context as Activity).window
-            window.statusBarColor = colorScheme.background.toArgb()
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
+
+if (!view.isInEditMode) {
+    SideEffect {
+        val window = (view.context as Activity).window
+        WindowCompat.getInsetsController(window, view).apply {
+            isAppearanceLightStatusBars = !darkTheme
         }
     }
+}
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = Typography,
+       // typography = Typography,
         content = content
     )
 }

@@ -11,7 +11,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Send
+//import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
@@ -143,16 +144,17 @@ fun ChatScreen(
         Surface(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
         ) {
 
             LazyColumn(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(
-                        horizontal = 12.dp
-                    ),
-
+                    .fillMaxSize(),
+                contentPadding = PaddingValues(
+                    start = 12.dp,
+                    end = 12.dp,
+                    top = innerPadding.calculateTopPadding(),
+                    bottom = innerPadding.calculateBottomPadding()
+                ),
                 state = listState,
 
                 verticalArrangement =
@@ -302,7 +304,7 @@ fun MessageInput(
 
                 Icon(
                     imageVector =
-                        Icons.Default.Send,
+                        Icons.AutoMirrored.Filled.Send,
 
                     contentDescription =
                         "Kirim"

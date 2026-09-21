@@ -24,10 +24,8 @@ abstract class ChatDatabase : RoomDatabase() {
         private val MIGRATION_1_2 =
             object : Migration(1, 2) {
 
-                override fun migrate(
-                    database: SupportSQLiteDatabase
-                ) {
-                    database.execSQL(
+                override fun migrate(db: SupportSQLiteDatabase) {
+                    db.execSQL(
                         """
                         ALTER TABLE messages
                         ADD COLUMN isProcessed INTEGER
@@ -41,9 +39,9 @@ abstract class ChatDatabase : RoomDatabase() {
             object : Migration(2, 3) {
 
                 override fun migrate(
-                    database: SupportSQLiteDatabase
+                    db: SupportSQLiteDatabase
                 ) {
-                    database.execSQL(
+                    db.execSQL(
                         """
                         ALTER TABLE messages
                         ADD COLUMN status TEXT
@@ -51,7 +49,7 @@ abstract class ChatDatabase : RoomDatabase() {
                         """
                     )
 
-                    database.execSQL(
+                    db.execSQL(
                         """
                         UPDATE messages
                         SET status = 'PROCESSED'
@@ -59,7 +57,7 @@ abstract class ChatDatabase : RoomDatabase() {
                         """
                     )
 
-                    database.execSQL(
+                    db.execSQL(
                         """
                         UPDATE messages
                         SET status = 'PROCESSED'

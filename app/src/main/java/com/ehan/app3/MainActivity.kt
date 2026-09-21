@@ -50,13 +50,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ehan.app3.data.ChatDatabase
 import com.ehan.app3.ui.theme.App3Theme
@@ -115,12 +115,12 @@ fun Greeting(name: String, viewmodel: MainViewModel, viewModel: ChatViewModel, m
     val lifecycleOwner = LocalLifecycleOwner.current
     val userPreferences by viewmodel.userPreferences.collectAsStateWithLifecycle(lifecycleOwner = lifecycleOwner)
     val statusNotification by viewmodel.statusMessage.collectAsStateWithLifecycle(lifecycleOwner = lifecycleOwner)
-    Scaffold { innerPadding ->
-        Surface(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-        ) {
+  //  Scaffold { innerPadding ->
+   //     Surface(
+     //       modifier = modifier
+      //          .fillMaxSize()
+   //             .padding(innerPadding)
+    //    ) {
             ChatScreen(
                 viewModel = viewModel
             )
@@ -152,7 +152,7 @@ fun Greeting(name: String, viewmodel: MainViewModel, viewModel: ChatViewModel, m
                     )
                 }
             }*/
-        }
+      //  }
     }
 }
 
