@@ -35,6 +35,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.ehan.app3.models.NetworkMonitor
+import com.ehan.app3.ChatViewModel
 
 @Composable
 fun ChatScreen(
