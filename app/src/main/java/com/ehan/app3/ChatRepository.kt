@@ -1,8 +1,9 @@
 package com.ehan.app3
 
-import com.ehan.app3.bot.BotEngine
 import com.ehan.app3.data.ChatDao
 import com.ehan.app3.data.ChatMessage
+import com.ehan.app3.network.ChatApiProvider
+import com.ehan.app3.network.ChatRequest
 import kotlinx.coroutines.delay
 
 class ChatRepository(
@@ -43,13 +44,17 @@ class ChatRepository(
             try {
 
                 delay(700)
-                val botEngine = BotEngine()
-                val reply =
-                    botEngine.reply(message.text)
+
+                val response =
+                    ChatApiProvider.api.sendMessage(
+                        ChatRequest(
+                            message = message.text
+                        )
+                    )
 
                 chatDao.insertMessage(
                     ChatMessage(
-                        text = reply,
+                        text = response.reply,
                         isBot = true,
                         status = "PROCESSED"
                     )
