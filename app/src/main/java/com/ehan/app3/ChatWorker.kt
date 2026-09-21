@@ -4,7 +4,7 @@ import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import androidx.work.CoroutineWorker
-import androidx.work.workerparameters
+import androidx.work.WorkerParameters
 import com.ehan.app3.bot.BotEngine
 import com.ehan.app3.data.ChatDatabase
 
