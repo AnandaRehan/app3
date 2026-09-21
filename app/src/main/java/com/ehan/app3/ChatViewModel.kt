@@ -19,7 +19,7 @@ class ChatViewModel(
     private val repository =
         ChatRepository(chatDao)
 
-    val messages: StateFlow<List<com.example.whatsappbot.data.ChatMessage>> =
+    val messages: StateFlow<List<com.ehan.app3.data.ChatMessage>> =
         repository.getMessages()
             .stateIn(
                 scope = viewModelScope,
