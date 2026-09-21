@@ -4,10 +4,12 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
     entities = [ChatMessage::class],
-    version = 1,
+    version = 3,
     exportSchema = false
 )
 abstract class ChatDatabase : RoomDatabase() {
@@ -19,15 +21,72 @@ abstract class ChatDatabase : RoomDatabase() {
         @Volatile
         private var INSTANCE: ChatDatabase? = null
 
-        fun getDatabase(context: Context): ChatDatabase {
+        private val MIGRATION_1_2 =
+            object : Migration(1, 2) {
+
+                override fun migrate(
+                    database: SupportSQLiteDatabase
+                ) {
+                    database.execSQL(
+                        """
+                        ALTER TABLE messages
+                        ADD COLUMN isProcessed INTEGER
+                        NOT NULL DEFAULT 0
+                        """
+                    )
+                }
+            }
+
+        private val MIGRATION_2_3 =
+            object : Migration(2, 3) {
+
+                override fun migrate(
+                    database: SupportSQLiteDatabase
+                ) {
+                    database.execSQL(
+                        """
+                        ALTER TABLE messages
+                        ADD COLUMN status TEXT
+                        NOT NULL DEFAULT 'PENDING'
+                        """
+                    )
+
+                    database.execSQL(
+                        """
+                        UPDATE messages
+                        SET status = 'PROCESSED'
+                        WHERE isBot = 1
+                        """
+                    )
+
+                    database.execSQL(
+                        """
+                        UPDATE messages
+                        SET status = 'PROCESSED'
+                        WHERE isBot = 0
+                        AND isProcessed = 1
+                        """
+                    )
+                }
+            }
+
+        fun getDatabase(
+            context: Context
+        ): ChatDatabase {
 
             return INSTANCE ?: synchronized(this) {
 
-                val instance = Room.databaseBuilder(
-                    context.applicationContext,
-                    ChatDatabase::class.java,
-                    "chat_database"
-                ).build()
+                val instance =
+                    Room.databaseBuilder(
+                        context.applicationContext,
+                        ChatDatabase::class.java,
+                        "chat_database"
+                    )
+                        .addMigrations(
+                            MIGRATION_1_2,
+                            MIGRATION_2_3
+                        )
+                        .build()
 
                 INSTANCE = instance
 

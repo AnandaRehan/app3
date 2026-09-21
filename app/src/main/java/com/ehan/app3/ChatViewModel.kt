@@ -3,9 +3,9 @@ package com.ehan.app3
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.ehan.app3.bot.BotEngine
 import com.ehan.app3.data.ChatDao
 import com.ehan.app3.data.ChatMessage
-import com.ehan.app3.bot.BotEngine
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -26,15 +26,21 @@ class ChatViewModel(
                 initialValue = emptyList()
             )
 
-    private val _isTyping = MutableStateFlow(false)
+    private val _isTyping =
+        MutableStateFlow(false)
+
     val isTyping: StateFlow<Boolean> =
         _isTyping
 
-    private val _isOnline = MutableStateFlow(false)
+    private val _isOnline =
+        MutableStateFlow(false)
+
     val isOnline: StateFlow<Boolean> =
         _isOnline
 
-    fun updateNetworkStatus(isOnline: Boolean) {
+    fun updateNetworkStatus(
+        isOnline: Boolean
+    ) {
         _isOnline.value = isOnline
 
         if (isOnline) {
@@ -53,7 +59,8 @@ class ChatViewModel(
             chatDao.insertMessage(
                 ChatMessage(
                     text = cleanText,
-                    isBot = false
+                    isBot = false,
+                    status = "PENDING"
                 )
             )
 
@@ -62,30 +69,64 @@ class ChatViewModel(
                 return@launch
             }
 
-            processBotReply(cleanText)
+            processPendingMessages()
         }
     }
 
-    private suspend fun processBotReply(
-        text: String
-    ) {
-        _isTyping.value = true
+    private suspend fun processPendingMessages() {
 
-        delay(700)
-        val botEngine = BotEngine()
-        val reply = botEngine.reply(text)
+        if (!_isOnline.value) {
+            return
+        }
 
-        chatDao.insertMessage(
-            ChatMessage(
-                text = reply,
-                isBot = true
-            )
-        )
+        val pendingMessages =
+            chatDao.getPendingMessages()
+
+        for (message in pendingMessages) {
+
+            val locked =
+                chatDao.markAsProcessing(
+                    message.id
+                )
+
+            if (locked == 0) {
+                continue
+            }
+
+            try {
+
+                _isTyping.value = true
+
+                delay(700)
+                val botEngine = BotEngine()
+                val reply =
+                    botEngine.reply(message.text)
+
+                chatDao.insertMessage(
+                    ChatMessage(
+                        text = reply,
+                        isBot = true,
+                        status = "PROCESSED"
+                    )
+                )
+
+                chatDao.markAsProcessed(
+                    message.id
+                )
+
+            } catch (exception: Exception) {
+
+                chatDao.resetToPending(
+                    message.id
+                )
+            }
+        }
 
         _isTyping.value = false
     }
 
     fun clearChat() {
+
         viewModelScope.launch {
             chatDao.deleteAllMessages()
         }

@@ -13,5 +13,11 @@ data class ChatMessage(
 
     val isBot: Boolean,
 
+    val status: String = if (isBot) {
+        "PROCESSED"
+    } else {
+        "PENDING"
+    },
+
     val timestamp: Long = System.currentTimeMillis()
 )
