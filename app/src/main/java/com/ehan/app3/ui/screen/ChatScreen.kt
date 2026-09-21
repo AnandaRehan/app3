@@ -1,4 +1,4 @@
-package com.example.whatsappbot
+package com.ehan.app3.ui.screen
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -34,6 +34,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.ehan.app3.models.NetworkMonitor
 
 @Composable
 fun ChatScreen(
