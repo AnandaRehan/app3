@@ -73,8 +73,7 @@ class ChatViewModel(
 
         delay(700)
 
-        val reply =
-            BotEngine.reply(text)
+        val reply = BotEngine.reply(text)
 
         chatDao.insertMessage(
             ChatMessage(

@@ -175,7 +175,7 @@ fun ChatHeader(
 
 @Composable
 fun MessageBubble(
-    message: com.example.whatsappbot.data.ChatMessage
+    message: com.ehan.app3.data.ChatMessage
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
