@@ -4,11 +4,9 @@ import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import androidx.work.CoroutineWorker
-import androidx.work.WorkerParameters
+import androidx.work.workerparameters
 import com.ehan.app3.bot.BotEngine
 import com.ehan.app3.data.ChatDatabase
-import com.ehan.app3.data.ChatMessage
-import kotlinx.coroutines.delay
 
 class ChatWorker(
     appContext: Context,
@@ -24,64 +22,31 @@ class ChatWorker(
             return Result.retry()
         }
 
-        val database =
-            ChatDatabase.getDatabase(
-                applicationContext
-            )
+        return try {
 
-        val chatDao =
-            database.chatDao()
+            val database =
+                ChatDatabase.getDatabase(
+                    applicationContext
+                )
 
-        val pendingMessages =
-            chatDao.getPendingMessages()
+            val repository =
+                ChatRepository(
+                    database.chatDao()
+                )
 
-        for (message in pendingMessages) {
+            val success =
+                repository.processPendingMessages()
 
-            if (!isInternetAvailable()) {
-                chatDao.resetToPending(message.id)
-                return Result.retry()
+            if (success) {
+                Result.success()
+            } else {
+                Result.retry()
             }
-
-            val locked =
-                chatDao.markAsProcessing(
-                    message.id
-                )
-
-            // Pesan sudah diproses oleh worker lain
-            if (locked == 0) {
-                continue
-            }
-
-            try {
-
-                delay(700)
-                val botEngine = BotEngine()
-                val reply =
-                    botEngine.reply(message.text)
-
-                chatDao.insertMessage(
-                    ChatMessage(
-                        text = reply,
-                        isBot = true,
-                        status = "PROCESSED"
-                    )
-                )
-
-                chatDao.markAsProcessed(
-                    message.id
-                )
 
             } catch (exception: Exception) {
 
-                chatDao.resetToPending(
-                    message.id
-                )
-
-                return Result.retry()
-            }
+            Result.retry()
         }
-
-        return Result.success()
     }
 
     private fun isInternetAvailable(): Boolean {

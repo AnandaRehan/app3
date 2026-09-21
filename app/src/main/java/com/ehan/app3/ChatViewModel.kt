@@ -5,8 +5,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ehan.app3.bot.BotEngine
 import com.ehan.app3.data.ChatDao
-import com.ehan.app3.data.ChatMessage
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -14,12 +12,15 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class ChatViewModel(
-    private val chatDao: ChatDao,
+    chatDao: ChatDao,
     private val context: Context
 ) : ViewModel() {
 
-    val messages: StateFlow<List<ChatMessage>> =
-        chatDao.getAllMessages()
+    private val repository =
+        ChatRepository(chatDao)
+
+    val messages: StateFlow<List<com.example.whatsappbot.data.ChatMessage>> =
+        repository.getMessages()
             .stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5_000),
@@ -38,6 +39,12 @@ class ChatViewModel(
     val isOnline: StateFlow<Boolean> =
         _isOnline
 
+    private val _errorMessage =
+        MutableStateFlow<String?>(null)
+
+    val errorMessage: StateFlow<String?> =
+        _errorMessage
+
     fun updateNetworkStatus(
         isOnline: Boolean
     ) {
@@ -52,83 +59,61 @@ class ChatViewModel(
 
         val cleanText = text.trim()
 
-        if (cleanText.isEmpty()) return
-
-        viewModelScope.launch {
-
-            chatDao.insertMessage(
-                ChatMessage(
-                    text = cleanText,
-                    isBot = false,
-                    status = "PENDING"
-                )
-            )
-
-            if (!_isOnline.value) {
-                ChatWorkScheduler.schedule(context)
-                return@launch
-            }
-
-            processPendingMessages()
-        }
-    }
-
-    private suspend fun processPendingMessages() {
-
-        if (!_isOnline.value) {
+        if (cleanText.isEmpty()) {
             return
         }
 
-        val pendingMessages =
-            chatDao.getPendingMessages()
-
-        for (message in pendingMessages) {
-
-            val locked =
-                chatDao.markAsProcessing(
-                    message.id
-                )
-
-            if (locked == 0) {
-                continue
-            }
+        viewModelScope.launch {
 
             try {
 
+                repository.saveUserMessage(
+                    cleanText
+                )
+
+                if (!_isOnline.value) {
+                    ChatWorkScheduler.schedule(context)
+                    return@launch
+                }
+
                 _isTyping.value = true
 
-                delay(700)
-                val botEngine = BotEngine()
-                val reply =
-                    botEngine.reply(message.text)
+                val success =
+                    repository.processPendingMessages()
 
-                chatDao.insertMessage(
-                    ChatMessage(
-                        text = reply,
-                        isBot = true,
-                        status = "PROCESSED"
-                    )
-                )
-
-                chatDao.markAsProcessed(
-                    message.id
-                )
+                if (!success) {
+                    _errorMessage.value =
+                        "Pesan belum berhasil diproses."
+                }
 
             } catch (exception: Exception) {
 
-                chatDao.resetToPending(
-                    message.id
-                )
+                _errorMessage.value =
+                    "Terjadi kesalahan saat memproses pesan."
+
+            } finally {
+
+                _isTyping.value = false
             }
         }
+    }
 
-        _isTyping.value = false
+    fun clearError() {
+        _errorMessage.value = null
     }
 
     fun clearChat() {
 
         viewModelScope.launch {
-            chatDao.deleteAllMessages()
+
+            try {
+                repository.clearMessages()
+
+            } catch (exception: Exception) {
+
+                _errorMessage.value =
+                    "Gagal menghapus riwayat chat."
+            }
         }
     }
 }

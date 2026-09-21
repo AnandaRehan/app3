@@ -1,6 +1,5 @@
 package com.ehan.app3.ui.screen
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,8 +14,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -25,15 +25,18 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
+import com.ehan.app3.bot.BotEngine
 import com.ehan.app3.models.NetworkMonitor
 import com.ehan.app3.ChatViewModel
 
@@ -60,20 +63,41 @@ fun ChatScreen(
     val isOnline by networkMonitor.isOnline.collectAsState()
     val messages by viewModel.messages.collectAsState()
     val isTyping by viewModel.isTyping.collectAsState()
+    val errorMessage by viewModel.errorMessage.collectAsState()
 
     var inputText by rememberSaveable {
         mutableStateOf("")
     }
 
-    // Kirim status jaringan ke ViewModel
+    val listState = rememberLazyListState()
+
+    val snackbarHostState =
+        remember { SnackbarHostState() }
+
+    val scope = rememberCoroutineScope()
+
     LaunchedEffect(isOnline) {
         viewModel.updateNetworkStatus(isOnline)
     }
 
-    val listState = rememberLazyListState()
+    LaunchedEffect(errorMessage) {
+
+        errorMessage?.let { message ->
+
+            scope.launch {
+                snackbarHostState.showSnackbar(
+                    message = message
+                )
+
+                viewModel.clearError()
+            }
+        }
+    }
 
     LaunchedEffect(messages.size) {
+
         if (messages.isNotEmpty()) {
+
             listState.animateScrollToItem(
                 messages.lastIndex
             )
@@ -86,15 +110,29 @@ fun ChatScreen(
                 isOnline = isOnline
             )
         },
+
+        snackbarHost = {
+            SnackbarHost(
+                hostState = snackbarHostState
+            )
+        },
+
         bottomBar = {
             MessageInput(
                 text = inputText,
+
                 onTextChange = {
                     inputText = it
                 },
+
                 onSend = {
+
                     if (inputText.isNotBlank()) {
-                        viewModel.sendMessage(inputText)
+
+                        viewModel.sendMessage(
+                            inputText
+                        )
+
                         inputText = ""
                     }
                 }
@@ -111,9 +149,14 @@ fun ChatScreen(
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 12.dp),
+                    .padding(
+                        horizontal = 12.dp
+                    ),
+
                 state = listState,
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+
+                verticalArrangement =
+                    Arrangement.spacedBy(8.dp)
             ) {
 
                 items(
@@ -127,14 +170,18 @@ fun ChatScreen(
                 }
 
                 if (isTyping) {
+
                     item {
+
                         Text(
-                            text = "Bot sedang mengetik...",
-                            modifier = Modifier.padding(
-                                start = 8.dp,
-                                bottom = 8.dp
-                            ),
-                            style = MaterialTheme.typography.bodySmall
+                            text =
+                                "Bot sedang mengetik...",
+
+                            modifier =
+                                Modifier.padding(
+                                    start = 8.dp,
+                                    bottom = 8.dp
+                                )
                         )
                     }
                 }
@@ -151,13 +198,14 @@ fun ChatHeader(
         modifier = Modifier.fillMaxWidth(),
         color = Color(0xFF075E54)
     ) {
+
         Column(
             modifier = Modifier.padding(16.dp)
         ) {
+
             Text(
                 text = "WhatsApp Bot",
-                color = Color.White,
-                style = MaterialTheme.typography.titleLarge
+                color = Color.White
             )
 
             Text(
@@ -166,8 +214,7 @@ fun ChatHeader(
                 } else {
                     "● Offline"
                 },
-                color = Color.White,
-                style = MaterialTheme.typography.bodySmall
+                color = Color.White
             )
         }
     }
@@ -175,27 +222,33 @@ fun ChatHeader(
 
 @Composable
 fun MessageBubble(
-    message: com.ehan.app3.data.ChatMessage
+    message: com.example.whatsappbot.data.ChatMessage
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = if (message.isBot) {
-            Arrangement.Start
-        } else {
-            Arrangement.End
-        }
+
+        horizontalArrangement =
+            if (message.isBot) {
+                Arrangement.Start
+            } else {
+                Arrangement.End
+            }
     ) {
 
         Surface(
             shape = RoundedCornerShape(12.dp),
-            color = if (message.isBot) {
-                Color.White
-            } else {
-                Color(0xFFD9FDD3)
-            }
+
+            color =
+                if (message.isBot) {
+                    Color.White
+                } else {
+                    Color(0xFFD9FDD3)
+                }
         ) {
+
             Text(
                 text = message.text,
+
                 modifier = Modifier.padding(
                     horizontal = 12.dp,
                     vertical = 8.dp
@@ -212,33 +265,47 @@ fun MessageInput(
     onSend: () -> Unit
 ) {
     Surface(
-        modifier = Modifier.fillMaxWidth(),
-        tonalElevation = 3.dp
+        modifier = Modifier.fillMaxWidth()
     ) {
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(8.dp),
-            verticalAlignment = Alignment.CenterVertically
+
+            verticalAlignment =
+                Alignment.CenterVertically
         ) {
 
             TextField(
                 value = text,
-                onValueChange = onTextChange,
-                modifier = Modifier.weight(1f),
+
+                onValueChange =
+                    onTextChange,
+
+                modifier =
+                    Modifier.weight(1f),
+
                 placeholder = {
                     Text("Tulis pesan...")
                 },
+
                 singleLine = true
             )
 
             IconButton(
                 onClick = onSend,
-                enabled = text.isNotBlank()
+
+                enabled =
+                    text.isNotBlank()
             ) {
+
                 Icon(
-                    imageVector = Icons.Default.Send,
-                    contentDescription = "Kirim"
+                    imageVector =
+                        Icons.Default.Send,
+
+                    contentDescription =
+                        "Kirim"
                 )
             }
         }
