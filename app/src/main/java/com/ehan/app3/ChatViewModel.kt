@@ -3,15 +3,15 @@ package com.ehan.app3
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.ehan.app3.data.ChatDao
+import com.ehan.app3.data.ChatMessage
+import com.ehan.app3.bot.BotEngine
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import com.ehan.app3.data.ChatDao
-import com.ehan.app3.data.ChatMessage
-import com.ehan.app3.bot.BotEngine
 
 class ChatViewModel(
     private val chatDao: ChatDao,
@@ -72,8 +72,8 @@ class ChatViewModel(
         _isTyping.value = true
 
         delay(700)
-
-        val reply = BotEngine.reply(text)
+        val botEngine = BotEngine()
+        val reply = botEngine.reply(text)
 
         chatDao.insertMessage(
             ChatMessage(
