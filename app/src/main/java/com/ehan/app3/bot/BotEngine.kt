@@ -1,9 +1,7 @@
 package com.ehan.app3.bot
 
 class BotEngine {
-
     fun reply(message: String): String {
-
         return when (message.lowercase().trim()) {
 
             "halo",
