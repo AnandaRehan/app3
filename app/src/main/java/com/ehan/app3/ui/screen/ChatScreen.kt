@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
