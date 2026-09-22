@@ -15,7 +15,7 @@ class HelpCommand(
 
         val commandList =
             commands
-              //  .filter { it.name != "help" }
+                .filter { it.name != "help" }
                 .joinToString("\n") {
                     "/${it.name} - ${it.description}"
                 }
@@ -23,7 +23,7 @@ class HelpCommand(
         return """
             🆘 BANTUAN
 
-            $commandList
+        $commandList
         """.trimIndent()
     }
 }
