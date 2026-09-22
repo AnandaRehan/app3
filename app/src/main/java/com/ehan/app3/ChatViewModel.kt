@@ -1,6 +1,5 @@
 package com.ehan.app3
 
-import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ehan.app3.bot.BotEngine
@@ -12,8 +11,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class ChatViewModel(
-    chatDao: ChatDao,
-    private val context: Context
+    chatDao: ChatDao
 ) : ViewModel() {
 
     private val repository =
@@ -49,10 +47,6 @@ class ChatViewModel(
         isOnline: Boolean
     ) {
         _isOnline.value = isOnline
-
-        if (isOnline) {
-            ChatWorkScheduler.schedule(context)
-        }
     }
 
     fun sendMessage(text: String) {
@@ -70,11 +64,6 @@ class ChatViewModel(
                 repository.saveUserMessage(
                     cleanText
                 )
-
-                if (!_isOnline.value) {
-                    ChatWorkScheduler.schedule(context)
-                    return@launch
-                }
 
                 _isTyping.value = true
 

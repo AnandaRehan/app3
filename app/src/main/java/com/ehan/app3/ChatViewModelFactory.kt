@@ -1,13 +1,11 @@
 package com.ehan.app3
 
-import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.ehan.app3.data.ChatDao
 
 class ChatViewModelFactory(
-    private val chatDao: ChatDao,
-    private val context: Context
+    private val chatDao: ChatDao
 ) : ViewModelProvider.Factory {
 
     @Suppress("UNCHECKED_CAST")
@@ -18,8 +16,7 @@ class ChatViewModelFactory(
         if (modelClass.isAssignableFrom(ChatViewModel::class.java)) {
 
             return ChatViewModel(
-                chatDao = chatDao,
-                context = context.applicationContext
+                chatDao = chatDao
             ) as T
         }
 
