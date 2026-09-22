@@ -9,6 +9,9 @@ class ChatRepository(
     private val chatDao: ChatDao
 ) {
 
+    private val botEngine =
+        BotEngine()
+
     fun getMessages() =
         chatDao.getAllMessages()
 
@@ -43,9 +46,6 @@ class ChatRepository(
             try {
 
                 delay(700)
-
-                val botEngine =
-                    BotEngine()
 
                 val reply =
                     botEngine.reply(message.text)
