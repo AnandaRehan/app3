@@ -95,8 +95,7 @@ class MainActivity : ComponentActivity() {
                 val chatViewModel: ChatViewModel =
                     viewModel(
                         factory = ChatViewModelFactory(
-                            chatDao = database.chatDao(),
-                            context = applicationContext
+                            chatDao = database.chatDao()
                         )
                     )
                 Greeting(
