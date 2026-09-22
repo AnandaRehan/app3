@@ -19,6 +19,7 @@ class MenuCommand : BotCommand {
 
             🤖 AI
             /ai
+            /aiprovider
 
             🛠 TOOLS
             /tools
@@ -29,4 +30,4 @@ class MenuCommand : BotCommand {
             Ketik command di atas untuk membuka kategorinya.
         """.trimIndent()
     }
-}
+            }

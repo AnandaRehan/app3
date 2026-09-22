@@ -9,6 +9,7 @@ import com.ehan.app3.bot.command.commands.AiCommand
 import com.ehan.app3.bot.command.commands.DownloadCommand
 import com.ehan.app3.bot.ai.LocalAiService
 import com.ehan.app3.bot.ai.AiProviderManager
+import com.ehan.app3.bot.command.commands.AiProviderCommand
 
 class CommandManager {
 
@@ -23,7 +24,8 @@ class CommandManager {
             StyleCommand(),
             AllMenuCommand(),
             DownloadCommand(),
-            AiCommand(aiProviderManager)
+            AiCommand(aiProviderManager),
+            AiProviderCommand(aiProviderManager)
         )
 
     private val commandMap =

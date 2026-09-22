@@ -18,7 +18,8 @@ class AllMenuCommand : BotCommand {
             Fitur download akan ditambahkan nanti.
 
             🤖 AI
-            Fitur AI akan ditambahkan nanti.
+            /ai <pertanyaan>
+            /aiprovider
 
             🛠 TOOLS
             /gaya <teks>
