@@ -9,9 +9,7 @@ class MenuCommand : BotCommand {
     override val description =
         "Menampilkan menu utama"
 
-    override fun execute(
-        argument: String?
-    ): String {
+    override suspend fun execute(argument: String?): String {
 
         return """
             🤖 MENU BOT

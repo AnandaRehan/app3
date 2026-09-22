@@ -7,19 +7,13 @@ class BotEngine {
     private val commandManager =
         CommandManager()
 
-    fun reply(message: String): String {
-
-        val input =
-            message.trim()
+    suspend fun reply(message: String): String {
+        val input = message.trim()
 
         return if (input.startsWith("/")) {
-
             commandManager.execute(input)
-
         } else {
-
             when (input.lowercase()) {
-
                 "halo",
                 "hai",
                 "hello" ->

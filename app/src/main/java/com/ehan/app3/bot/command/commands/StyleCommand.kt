@@ -13,9 +13,7 @@ class StyleCommand : BotCommand {
     private val styleManager =
         TextStyleManager()
 
-    override fun execute(
-        argument: String?
-    ): String {
+    override suspend fun execute(argument: String?): String {
 
         if (argument.isNullOrBlank()) {
             return showHelp()

@@ -9,9 +9,7 @@ class ToolsCommand : BotCommand {
     override val description =
         "Menampilkan tools"
 
-    override fun execute(
-        argument: String?
-    ): String {
+    override suspend fun execute(argument: String?): String {
 
         return """
             🛠 TOOLS

@@ -9,9 +9,7 @@ class DownloadCommand : BotCommand {
     override val description =
         "Menampilkan fitur download"
 
-    override fun execute(
-        argument: String?
-    ): String {
+    override suspend fun execute(argument: String?): String {
 
         return """
             📥 DOWNLOAD
