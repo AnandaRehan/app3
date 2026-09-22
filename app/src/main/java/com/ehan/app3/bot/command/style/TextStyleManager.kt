@@ -5,6 +5,7 @@ import com.ehan.app3.bot.command.style.styles.BoldStyle
 import com.ehan.app3.bot.command.style.styles.ItalicStyle
 import com.ehan.app3.bot.command.style.styles.MonoStyle
 import com.ehan.app3.bot.command.style.styles.StrikeStyle
+import com.ehan.app3.bot.command.style.styles.QuoteStyle
 
 class TextStyleManager {
 
@@ -14,7 +15,8 @@ class TextStyleManager {
             BoldStyle(),
             MonoStyle(),
             StrikeStyle(),
-            BoldItalicStyle()
+            BoldItalicStyle(),
+            QuoteStyle()
         )
 
     private val styleMap =
