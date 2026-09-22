@@ -111,7 +111,6 @@ fun ChatScreen(
         topBar = {
             Surface(
                 modifier = Modifier
-                    .fillMaxSize()
                     .systemBarsPadding()
             ) {
                 ChatHeader(
