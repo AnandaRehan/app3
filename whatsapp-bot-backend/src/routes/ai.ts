@@ -1,60 +1,66 @@
 import type { FastifyInstance } from "fastify";
 
 export async function aiRoutes(app: FastifyInstance) {
-  app.post("/api/ai", async (request, reply) => {
-    const body = request.body as {
-      prompt?: string;
-    };
+    app.post("/api/ai", async (request, reply) => {
+        const body = request.body as {
+            prompt?: string;
+        };
 
-    const prompt = body.prompt?.trim();
+        const prompt = body.prompt?.trim();
 
-    if (!prompt) {
-      return reply.code(400).send({
-        error: "Prompt tidak boleh kosong."
-      });
-    }
-
-    const apiKey = process.env.OPENAI_API_KEY;
-
-    if (!apiKey) {
-      return reply.code(500).send({
-        error: "OPENAI_API_KEY belum dikonfigurasi."
-      });
-    }
-
-    try {
-      const response = await fetch(
-        "https://api.openai.com/v1/responses",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${apiKey}`
-          },
-          body: JSON.stringify({
-            model: "gpt-5.6-luna",
-            input: prompt
-          })
+        if (!prompt) {
+            return reply.code(400).send({
+                error: "Prompt tidak boleh kosong."
+            });
         }
-      );
 
-      const data = await response.json();
+        const apiKey = process.env.OPENAI_API_KEY;
 
-      if (!response.ok) {
-        return reply.code(response.status).send({
-          error: "OpenAI API error.",
-          details: data
-        });
-      }
+        if (!apiKey) {
+            return reply.code(500).send({
+                error: "OPENAI_API_KEY belum dikonfigurasi."
+            });
+        }
 
-      return {
-        text: data.output_text ?? ""
-      };
+        try {
+            const response = await fetch(
+                "https://api.openai.com/v1/responses",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${apiKey}`
+                    },
+                    body: JSON.stringify({
+                        model: "gpt-5.6-luna",
+                        input: prompt
+                    })
+                }
+            );
 
-    } catch (error) {
-      return reply.code(500).send({
-        error: "Gagal menghubungi OpenAI."
-      });
-    }
-  });
+            const data = await response.json();
+
+            if (!response.ok) {
+                return reply.code(response.status).send({
+                    error: "OpenAI API error.",
+                    details: data
+                });
+            }
+
+            const text =
+                data.output
+                    ?.flatMap((item: any) => item.content ?? [])
+                    ?.filter((content: any) => content.type === "output_text")
+                    ?.map((content: any) => content.text)
+                    ?.join("") ?? "";
+
+            return {
+                text
+            };
+        } catch (error) {
+            return reply.code(500).send({
+                error: "Gagal menghubungi OpenAI."
+            });
+        }
+    });
 }

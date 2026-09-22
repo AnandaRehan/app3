@@ -5,11 +5,14 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 class BackendAiProvider(
     private val baseUrl: String
-) : AiProvider {
+) : RemoteAiProvider {
 
     override val name = "backend"
 
-    private val api: AiProxyApi =
+    override val endpoint: String
+        get() = baseUrl
+
+    private val api =
         Retrofit.Builder()
             .baseUrl(baseUrl)
             .addConverterFactory(
@@ -27,12 +30,12 @@ class BackendAiProvider(
                     )
                 )
 
-            response.text
-                ?: response.error
-                ?: "AI tidak memberikan respons."
+            response.text.ifBlank {
+                "❌ Server AI tidak mengembalikan teks."
+            }
 
         } catch (exception: Exception) {
-            "❌ Gagal menghubungi server AI."
+            "❌ Gagal menghubungi server AI:\n${exception::class.simpleName}\n${exception.message}"
         }
     }
 }
