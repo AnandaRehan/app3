@@ -1,5 +1,6 @@
 package com.ehan.app3.ui.screen
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -115,7 +116,10 @@ fun ChatScreen(
     Scaffold(
         topBar = {
             ChatHeader(
-                isOnline = isOnline
+                isOnline = isOnline,
+                onClearChat = {
+                    viewModel.clearChat()
+                }
             )
         },
 
@@ -208,7 +212,8 @@ fun ChatScreen(
 
 @Composable
 fun ChatHeader(
-    isOnline: Boolean
+    isOnline: Boolean,
+    onClearChat: () -> Unit
 ) {
     Surface(
         modifier = Modifier
@@ -218,25 +223,47 @@ fun ChatHeader(
         color = Color(0xFF075E54)
     ) {
 
-        Column(
-            modifier = Modifier.padding(
-                horizontal = 16.dp,
-                vertical = 12.dp
-            )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(
+                    horizontal = 16.dp,
+                    vertical = 12.dp
+                ),
+
+            verticalAlignment =
+                Alignment.CenterVertically
         ) {
 
-            Text(
-                text = "WhatsApp Bot",
-                color = Color.White
-            )
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+
+                Text(
+                    text = "WhatsApp Bot",
+                    color = Color.White
+                )
+
+                Text(
+                    text = if (isOnline) {
+                        "● Online"
+                    } else {
+                        "● Offline"
+                    },
+                    color = Color.White
+                )
+            }
 
             Text(
-                text = if (isOnline) {
-                    "● Online"
-                } else {
-                    "● Offline"
-                },
-                color = Color.White
+                text = "Clear",
+
+                color = Color.White,
+
+                modifier = Modifier
+                    .clickable {
+                        onClearChat()
+                    }
+                    .padding(8.dp)
             )
         }
     }
