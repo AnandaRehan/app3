@@ -17,10 +17,10 @@ class MenuCommand : BotCommand {
             🤖 MENU BOT
 
             📥 DOWNLOAD
-            Kumpulan fitur download.
+            /download
 
             🤖 AI
-            Kumpulan fitur AI.
+            /ai
 
             🛠 TOOLS
             /tools
@@ -28,7 +28,7 @@ class MenuCommand : BotCommand {
             📋 SEMUA MENU
             /allmenu
 
-            Ketik /tools untuk melihat tools.
+            Ketik command di atas untuk membuka kategorinya.
         """.trimIndent()
     }
 }

@@ -5,6 +5,8 @@ import com.ehan.app3.bot.command.commands.HelpCommand
 import com.ehan.app3.bot.command.commands.MenuCommand
 import com.ehan.app3.bot.command.commands.StyleCommand
 import com.ehan.app3.bot.command.commands.ToolsCommand
+import com.ehan.app3.bot.command.commands.AiCommand
+import com.ehan.app3.bot.command.commands.DownloadCommand
 
 class CommandManager {
 
@@ -14,7 +16,9 @@ class CommandManager {
             HelpCommand(),
             ToolsCommand(),
             StyleCommand(),
-            AllMenuCommand()
+            AllMenuCommand(),
+            DownloadCommand(),
+            AiCommand()
         )
 
     private val commandMap =
