@@ -12,14 +12,19 @@ class ToolsCommand : BotCommand {
     override fun execute(
         argument: String?
     ): String {
+
         return """
             🛠 TOOLS
 
-            /gaya <teks>
-            Format teks untuk WhatsApp.
+            🎨 GAYA TEKS
+            /gaya italic <teks>
+            /gaya bold <teks>
+            /gaya mono <teks>
+            /gaya strike <teks>
+            /gaya bolditalic <teks>
 
             Contoh:
-            /gaya halo dunia
+            /gaya bold halo dunia
         """.trimIndent()
     }
 }
