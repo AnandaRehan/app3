@@ -6,7 +6,7 @@ class AiProviderManager {
         listOf(
             LocalAiService(),
             OpenAiProvider(
-                endpoint = "https://api.openai.com/v1/responses"
+                AiConfig()
             )
         )
 
