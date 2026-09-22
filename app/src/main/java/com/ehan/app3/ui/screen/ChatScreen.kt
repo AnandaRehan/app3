@@ -14,7 +14,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material3.Icon
@@ -295,12 +294,9 @@ fun MessageBubble(
                         }
                     ) {
 
-                        Icon(
-                            imageVector =
-                                Icons.Default.ContentCopy,
-
-                            contentDescription =
-                                "Salin pesan"
+                        Text(
+                            text = "⧉",
+                            modifier = Modifier.padding(8.dp)
                         )
                     }
                 }
