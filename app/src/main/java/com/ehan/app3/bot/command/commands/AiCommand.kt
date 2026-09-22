@@ -1,30 +1,35 @@
 package com.ehan.app3.bot.command.commands
 
+import com.ehan.app3.bot.ai.AiService
 import com.ehan.app3.bot.command.BotCommand
 
-class AiCommand : BotCommand {
+class AiCommand(
+    private val aiService: AiService
+) : BotCommand {
 
     override val name = "ai"
 
     override val description =
-        "Menampilkan fitur AI"
+        "Menggunakan fitur AI"
 
-    override fun execute(
+    override suspend fun execute(
         argument: String?
     ): String {
 
-        return """
-            🤖 AI
+        if (argument.isNullOrBlank()) {
+            return """
+                🤖 AI
 
-            Fitur AI akan tersedia di sini.
+                Gunakan:
+                /ai <pertanyaan>
 
-            Contoh fitur:
-            • Tanya AI
-            • Ringkas teks
-            • Terjemahan
-            • Analisis teks
+                Contoh:
+                /ai jelaskan fotosintesis
+            """.trimIndent()
+        }
 
-            ⚠️ Fitur masih dalam pengembangan.
-        """.trimIndent()
+        return aiService.ask(
+            argument.trim()
+        )
     }
 }

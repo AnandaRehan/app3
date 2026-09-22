@@ -6,5 +6,5 @@ interface BotCommand {
 
     val description: String
 
-    fun execute(argument: String?): String
+    suspend fun execute(argument: String?): String
 }
