@@ -29,7 +29,9 @@ class AiProviderManager {
             providerMap[name.lowercase()]
                 ?: return false
 
-        activeProviderName = provider.name.lowercase()
+        activeProviderName =
+            provider.name.lowercase()
+
         return true
     }
 

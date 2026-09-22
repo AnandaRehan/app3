@@ -1,15 +1,14 @@
 package com.ehan.app3.bot.command
 
+import com.ehan.app3.bot.ai.AiProviderManager
+import com.ehan.app3.bot.command.commands.AiCommand
+import com.ehan.app3.bot.command.commands.AiProviderCommand
 import com.ehan.app3.bot.command.commands.AllMenuCommand
+import com.ehan.app3.bot.command.commands.DownloadCommand
 import com.ehan.app3.bot.command.commands.HelpCommand
 import com.ehan.app3.bot.command.commands.MenuCommand
 import com.ehan.app3.bot.command.commands.StyleCommand
 import com.ehan.app3.bot.command.commands.ToolsCommand
-import com.ehan.app3.bot.command.commands.AiCommand
-import com.ehan.app3.bot.command.commands.DownloadCommand
-import com.ehan.app3.bot.ai.LocalAiService
-import com.ehan.app3.bot.ai.AiProviderManager
-import com.ehan.app3.bot.command.commands.AiProviderCommand
 
 class CommandManager {
 
