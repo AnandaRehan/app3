@@ -6,7 +6,7 @@ class AiProviderManager {
         listOf(
             LocalAiService(),
             BackendAiProvider(
-                baseUrl = "http://127.0.0.1/"
+                baseUrl = "http://10.1.2.238:3000/"
             )
         )
 
