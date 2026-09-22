@@ -56,8 +56,8 @@ class StyleCommand : BotCommand {
             /gaya bolditalic <teks>
             /gaya quote <teks>
 
-            /gaya bold halo dunia
             Contoh:
+            /gaya bold halo dunia
         """.trimIndent()
     }
 

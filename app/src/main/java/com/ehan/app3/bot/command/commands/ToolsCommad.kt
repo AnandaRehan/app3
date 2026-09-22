@@ -20,6 +20,7 @@ class ToolsCommand : BotCommand {
             /gaya mono <teks>
             /gaya strike <teks>
             /gaya bolditalic <teks>
+            /gaya quote <teks>
 
             Contoh:
             /gaya bold halo dunia

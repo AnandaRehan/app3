@@ -15,15 +15,20 @@ class AllMenuCommand : BotCommand {
             📋 SEMUA MENU BOT
 
             📥 DOWNLOAD
-            Fitur download akan ditambahkan nanti.
+            /download
 
             🤖 AI
             /ai <pertanyaan>
             /aiprovider
 
             🛠 TOOLS
-            /gaya <teks>
-            Format teks untuk WhatsApp.
+            /tools
+            /gaya italic <teks>
+            /gaya bold <teks>
+            /gaya mono <teks>
+            /gaya strike <teks>
+            /gaya bolditalic <teks>
+            /gaya quote <teks>
 
             ℹ️ UMUM
             /menu
