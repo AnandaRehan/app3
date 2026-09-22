@@ -5,15 +5,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-//import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -28,20 +27,19 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.launch
-import com.ehan.app3.bot.BotEngine
-import com.ehan.app3.models.NetworkMonitor
 import com.ehan.app3.ChatViewModel
+import com.ehan.app3.models.NetworkMonitor
+import kotlinx.coroutines.launch
 
 @Composable
 fun ChatScreen(
@@ -84,7 +82,6 @@ fun ChatScreen(
     }
 
     LaunchedEffect(errorMessage) {
-
         errorMessage?.let { message ->
 
             scope.launch {
@@ -109,27 +106,15 @@ fun ChatScreen(
 
     Scaffold(
         topBar = {
-            Surface(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .systemBarsPadding()
-            ) {
-                ChatHeader(
-                    isOnline = isOnline
-                )
-            }
+            ChatHeader(
+                isOnline = isOnline
+            )
         },
 
         snackbarHost = {
-            Surface(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .systemBarsPadding()
-            ) {
-                SnackbarHost(
-                    hostState = snackbarHostState
-                )
-            }
+            SnackbarHost(
+                hostState = snackbarHostState
+            )
         },
 
         bottomBar = {
@@ -158,17 +143,20 @@ fun ChatScreen(
         Surface(
             modifier = Modifier
                 .fillMaxSize()
+                .padding(innerPadding)
         ) {
 
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize(),
-                contentPadding = PaddingValues(
+
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(
                     start = 12.dp,
                     end = 12.dp,
-                    top = innerPadding.calculateTopPadding(),
-                    bottom = innerPadding.calculateBottomPadding()
+                    top = 12.dp,
+                    bottom = 12.dp
                 ),
+
                 state = listState,
 
                 verticalArrangement =
@@ -190,14 +178,12 @@ fun ChatScreen(
                     item {
 
                         Text(
-                            text =
-                                "Bot sedang mengetik...",
+                            text = "Bot sedang mengetik...",
 
-                            modifier =
-                                Modifier.padding(
-                                    start = 8.dp,
-                                    bottom = 8.dp
-                                )
+                            modifier = Modifier.padding(
+                                start = 8.dp,
+                                bottom = 8.dp
+                            )
                         )
                     }
                 }
@@ -211,12 +197,18 @@ fun ChatHeader(
     isOnline: Boolean
 ) {
     Surface(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .statusBarsPadding(),
+
         color = Color(0xFF075E54)
     ) {
 
         Column(
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier.padding(
+                horizontal = 16.dp,
+                vertical = 12.dp
+            )
         ) {
 
             Text(
@@ -281,7 +273,9 @@ fun MessageInput(
     onSend: () -> Unit
 ) {
     Surface(
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
+            .navigationBarsPadding()
     ) {
 
         Row(
