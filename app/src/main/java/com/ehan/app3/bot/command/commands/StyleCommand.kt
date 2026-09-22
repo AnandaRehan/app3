@@ -1,6 +1,7 @@
 package com.ehan.app3.bot.command.commands
 
 import com.ehan.app3.bot.command.BotCommand
+import com.ehan.app3.bot.command.style.TextStyleManager
 
 class StyleCommand : BotCommand {
 
@@ -9,23 +10,15 @@ class StyleCommand : BotCommand {
     override val description =
         "Membuat teks dengan berbagai gaya"
 
+    private val styleManager =
+        TextStyleManager()
+
     override fun execute(
         argument: String?
     ): String {
 
         if (argument.isNullOrBlank()) {
-            return """
-                🎨 GAYA TEKS
-
-                /gaya italic <teks>
-                /gaya bold <teks>
-                /gaya mono <teks>
-                /gaya strike <teks>
-                /gaya bolditalic <teks>
-
-                Contoh:
-                /gaya bold halo dunia
-            """.trimIndent()
+            return showHelp()
         }
 
         val parts =
@@ -35,12 +28,7 @@ class StyleCommand : BotCommand {
             )
 
         if (parts.size < 2) {
-            return """
-                Format salah.
-
-                Contoh:
-                /gaya bold halo dunia
-            """.trimIndent()
+            return showHelp()
         }
 
         val style =
@@ -49,34 +37,39 @@ class StyleCommand : BotCommand {
         val text =
             parts[1].trim()
 
-        return when (style) {
+        return styleManager.format(
+            style,
+            text
+        ) ?: """
+            ❌ Gaya "$style" tidak tersedia.
 
-            "italic" ->
-                "_${text}_"
+            ${showAvailableStyles()}
+        """.trimIndent()
+    }
 
-            "bold" ->
-                "*${text}*"
+    private fun showHelp(): String {
+        return """
+            🎨 GAYA TEKS
 
-            "mono" ->
-                "```$text```"
+            /gaya italic <teks>
+            /gaya bold <teks>
+            /gaya mono <teks>
+            /gaya strike <teks>
+            /gaya bolditalic <teks>
 
-            "strike" ->
-                "~${text}~"
+            Contoh:
+            /gaya bold halo dunia
+        """.trimIndent()
+    }
 
-            "bolditalic" ->
-                "*_${text}_*"
-
-            else ->
-                """
-                    ❌ Gaya "$style" tidak tersedia.
-
-                    Pilihan:
-                    italic
-                    bold
-                    mono
-                    strike
-                    bolditalic
-                """.trimIndent()
-        }
+    private fun showAvailableStyles(): String {
+        return """
+            Pilihan:
+            italic
+            bold
+            mono
+            strike
+            bolditalic
+        """.trimIndent()
     }
 }
