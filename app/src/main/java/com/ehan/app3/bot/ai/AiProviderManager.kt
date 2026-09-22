@@ -5,8 +5,8 @@ class AiProviderManager {
     private val providers: List<AiProvider> =
         listOf(
             LocalAiService(),
-            OpenAiProvider(
-                AiConfig()
+            BackendAiProvider(
+                baseUrl = "http://127.0.0.1/"
             )
         )
 

@@ -1,4 +1,4 @@
-import { FastifyInstance } from "fastify";
+import type { FastifyInstance } from "fastify";
 
 export async function aiRoutes(app: FastifyInstance) {
   app.post("/api/ai", async (request, reply) => {
