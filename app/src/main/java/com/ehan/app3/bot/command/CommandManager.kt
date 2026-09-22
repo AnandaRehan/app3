@@ -1,5 +1,6 @@
 package com.ehan.app3.bot.command
 
+import com.ehan.app3.bot.command.commands.AllMenuCommand
 import com.ehan.app3.bot.command.commands.HelpCommand
 import com.ehan.app3.bot.command.commands.MenuCommand
 import com.ehan.app3.bot.command.commands.StyleCommand
@@ -12,7 +13,8 @@ class CommandManager {
             MenuCommand(),
             HelpCommand(),
             ToolsCommand(),
-            StyleCommand()
+            StyleCommand(),
+            AllMenuCommand()
         )
 
     private val commandMap =

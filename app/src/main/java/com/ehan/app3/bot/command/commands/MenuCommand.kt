@@ -12,15 +12,23 @@ class MenuCommand : BotCommand {
     override fun execute(
         argument: String?
     ): String {
+
         return """
             🤖 MENU BOT
 
-            📥 /download
-            🤖 /ai
-            🛠 /tools
-            📋 /allmenu
+            📥 DOWNLOAD
+            Kumpulan fitur download.
 
-            Ketik /tools untuk melihat fitur tools.
+            🤖 AI
+            Kumpulan fitur AI.
+
+            🛠 TOOLS
+            /tools
+
+            📋 SEMUA MENU
+            /allmenu
+
+            Ketik /tools untuk melihat tools.
         """.trimIndent()
     }
 }
