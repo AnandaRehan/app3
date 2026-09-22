@@ -52,16 +52,16 @@ class StyleCommand : BotCommand {
         return when (style) {
 
             "italic" ->
-                "_$text_"
+                "_${text}_"
 
             "bold" ->
-                "*$text*"
+                "*${text}*"
 
             "mono" ->
                 "```$text```"
 
             "strike" ->
-                "~$text~"
+                "~${text}~"
 
             "bolditalic" ->
                 "*_${text}_*"
