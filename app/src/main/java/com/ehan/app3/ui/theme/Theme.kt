@@ -23,7 +23,7 @@ enum class ThemeMode(
     LIGHT("Light")
 }
 
-private val DarkColorScheme = darkColorScheme(/**
+private val DarkColorScheme = darkColorScheme(
     primary = PrimaryDark,
     onPrimary = OnPrimaryDark,
     primaryContainer = PrimaryContainerDark,
@@ -43,11 +43,11 @@ private val DarkColorScheme = darkColorScheme(/**
     surfaceVariant = SurfaceVariantDark,
     onSurfaceVariant = OnSurfaceVariantDark,
     outline = OutlineDark,
-    outlineVariant = OutlineVariantDark*/
+    outlineVariant = OutlineVariantDark
 )
 
 private val LightColorScheme = lightColorScheme(
-    /**primary = PrimaryLight,
+    primary = PrimaryLight,
     onPrimary = OnPrimaryLight,
     primaryContainer = PrimaryContainerLight,
     onPrimaryContainer = OnPrimaryContainerLight,
@@ -66,7 +66,7 @@ private val LightColorScheme = lightColorScheme(
     surfaceVariant = SurfaceVariantLight,
     onSurfaceVariant = OnSurfaceVariantLight,
     outline = OutlineLight,
-    outlineVariant = OutlineVariantLight*/
+    outlineVariant = OutlineVariantLight
 )
 
 @Composable
@@ -86,18 +86,18 @@ fun App3Theme(
 
     val view = LocalView.current
 
-if (!view.isInEditMode) {
-    SideEffect {
-        val window = (view.context as Activity).window
-        WindowCompat.getInsetsController(window, view).apply {
-            isAppearanceLightStatusBars = !darkTheme
+    if (!view.isInEditMode) {
+            SideEffect {
+            val window = (view.context as Activity).window
+            WindowCompat.getInsetsController(window, view).apply {
+                isAppearanceLightStatusBars = !darkTheme
+            }
         }
     }
-}
 
     MaterialTheme(
         colorScheme = colorScheme,
-       // typography = Typography,
+        typography = Typography,
         content = content
     )
 }

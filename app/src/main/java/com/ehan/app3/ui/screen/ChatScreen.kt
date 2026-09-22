@@ -12,8 +12,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
@@ -37,6 +41,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
 import com.ehan.app3.ChatViewModel
 import com.ehan.app3.models.NetworkMonitor
 import kotlinx.coroutines.launch
@@ -232,6 +238,9 @@ fun ChatHeader(
 fun MessageBubble(
     message: com.ehan.app3.data.ChatMessage
 ) {
+    val clipboardManager =
+        LocalClipboardManager.current
+
     Row(
         modifier = Modifier.fillMaxWidth(),
 
@@ -254,14 +263,49 @@ fun MessageBubble(
                 }
         ) {
 
-            Text(
-                text = message.text,
-
+            Row(
                 modifier = Modifier.padding(
-                    horizontal = 12.dp,
-                    vertical = 8.dp
+                    start = 12.dp,
+                    top = 8.dp,
+                    end = 4.dp,
+                    bottom = 8.dp
+                ),
+
+                verticalAlignment =
+                    Alignment.CenterVertically
+            ) {
+
+                Text(
+                    text = message.text
                 )
-            )
+
+                if (message.isBot) {
+
+                    Spacer(
+                        modifier = Modifier.width(4.dp)
+                    )
+
+                    IconButton(
+                        onClick = {
+
+                            clipboardManager.setText(
+                                AnnotatedString(
+                                    message.text
+                                )
+                            )
+                        }
+                    ) {
+
+                        Icon(
+                            imageVector =
+                                Icons.Default.ContentCopy,
+
+                            contentDescription =
+                                "Salin pesan"
+                        )
+                    }
+                }
+            }
         }
     }
 }
