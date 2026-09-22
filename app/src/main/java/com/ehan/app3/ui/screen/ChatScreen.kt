@@ -14,6 +14,8 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material3.Icon
@@ -24,6 +26,8 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -130,7 +134,6 @@ fun ChatScreen(
                 },
 
                 onSend = {
-
                     if (inputText.isNotBlank()) {
 
                         viewModel.sendMessage(
@@ -139,6 +142,13 @@ fun ChatScreen(
 
                         inputText = ""
                     }
+                },
+
+                onCommand = { command ->
+
+                    viewModel.sendMessage(
+                        command
+                    )
                 }
             )
         }
@@ -309,7 +319,8 @@ fun MessageBubble(
 fun MessageInput(
     text: String,
     onTextChange: (String) -> Unit,
-    onSend: () -> Unit
+    onSend: () -> Unit,
+    onCommand: (String) -> Unit
 ) {
     Surface(
         modifier = Modifier
@@ -317,45 +328,100 @@ fun MessageInput(
             .navigationBarsPadding()
     ) {
 
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(8.dp),
-
-            verticalAlignment =
-                Alignment.CenterVertically
+                .padding(8.dp)
         ) {
 
-            TextField(
-                value = text,
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(
+                        rememberScrollState()
+                    ),
 
-                onValueChange =
-                    onTextChange,
-
-                modifier =
-                    Modifier.weight(1f),
-
-                placeholder = {
-                    Text("Tulis pesan...")
-                },
-
-                singleLine = true
-            )
-
-            IconButton(
-                onClick = onSend,
-
-                enabled =
-                    text.isNotBlank()
+                horizontalArrangement =
+                    Arrangement.spacedBy(8.dp)
             ) {
 
-                Icon(
-                    imageVector =
-                        Icons.AutoMirrored.Filled.Send,
-
-                    contentDescription =
-                        "Kirim"
+                AssistChip(
+                    onClick = {
+                        onCommand("/menu")
+                    },
+                    label = {
+                        Text("Menu")
+                    }
                 )
+
+                AssistChip(
+                    onClick = {
+                        onCommand("/download")
+                    },
+                    label = {
+                        Text("Download")
+                    }
+                )
+
+                AssistChip(
+                    onClick = {
+                        onCommand("/ai")
+                    },
+                    label = {
+                        Text("AI")
+                    }
+                )
+
+                AssistChip(
+                    onClick = {
+                        onCommand("/tools")
+                    },
+                    label = {
+                        Text("Tools")
+                    }
+                )
+            }
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
+
+                verticalAlignment =
+                    Alignment.CenterVertically
+            ) {
+
+                TextField(
+                    value = text,
+
+                    onValueChange =
+                        onTextChange,
+
+                    modifier =
+                        Modifier.weight(1f),
+
+                    placeholder = {
+                        Text("Tulis pesan...")
+                    },
+
+                    singleLine = true
+                )
+
+                IconButton(
+                    onClick = onSend,
+
+                    enabled =
+                        text.isNotBlank()
+                ) {
+
+                    Icon(
+                        imageVector =
+                            Icons.AutoMirrored.Filled.Send,
+
+                        contentDescription =
+                            "Kirim"
+                    )
+                }
             }
         }
     }
