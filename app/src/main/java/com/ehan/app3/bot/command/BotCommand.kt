@@ -1,33 +1,10 @@
-package com.ehan.app3.bot
+package com.ehan.app3.bot.command
 
-import com.ehan.app3.bot.command.CommandManager
+interface BotCommand {
 
-class BotEngine {
+    val name: String
 
-    private val commandManager =
-        CommandManager()
+    val description: String
 
-    fun reply(message: String): String {
-
-        val input =
-            message.trim()
-
-        return if (input.startsWith("/")) {
-
-            commandManager.execute(input)
-
-        } else {
-
-            when (input.lowercase()) {
-
-                "halo",
-                "hai",
-                "hello" ->
-                    "Halo! Ketik /menu untuk melihat fitur bot."
-
-                else ->
-                    "Saya belum mengerti pesan itu.\n\nKetik /menu untuk melihat fitur."
-            }
-        }
-    }
+    fun execute(argument: String?): String
 }

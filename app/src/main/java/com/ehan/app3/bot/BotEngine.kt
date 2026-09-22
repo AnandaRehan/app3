@@ -13,8 +13,11 @@ class BotEngine {
             message.trim()
 
         return if (input.startsWith("/")) {
+
             commandManager.execute(input)
+
         } else {
+
             when (input.lowercase()) {
 
                 "halo",
