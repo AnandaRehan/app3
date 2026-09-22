@@ -26,7 +26,6 @@ class CommandManager {
     init {
         val basicCommands =
             listOf<BotCommand>(
-                MenuCommand(),
                 ToolsCommand(),
                 StyleCommand(),
                 AllMenuCommand(),
@@ -39,6 +38,9 @@ class CommandManager {
             )
 
         commands =
+            listOf(
+                MenuCommand(basicCommands)
+            ) +
             basicCommands +
             HelpCommand(basicCommands)
     }

@@ -2,7 +2,9 @@ package com.ehan.app3.bot.command.commands
 
 import com.ehan.app3.bot.command.BotCommand
 
-class MenuCommand : BotCommand {
+class MenuCommand(
+    private val commands: List<BotCommand>
+) : BotCommand {
 
     override val name = "menu"
 
@@ -11,25 +13,28 @@ class MenuCommand : BotCommand {
 
     override suspend fun execute(argument: String?): String {
 
+        val commandList =
+            commands
+                .filter {
+                    it.name !in listOf(
+                        "menu",
+                        "help",
+                        "allmenu"
+                    )
+                }
+                .joinToString("\n") {
+                    "/${it.name}"
+                }
+
         return """
             🤖 MENU BOT
 
-            📥 DOWNLOAD
-            /download
-
-            🤖 AI
-            /ai
-            /aiprovider
-
-            🛠 TOOLS
-            /tools
-            /ping
-            /echo
+            $commandList
 
             📋 SEMUA MENU
             /allmenu
 
-            Ketik command di atas untuk membuka kategorinya.
+            Ketik command di atas untuk membuka fiturnya.
         """.trimIndent()
     }
-            }
+}

@@ -21,9 +21,7 @@ class HelpCommand(
                 }
 
         return """
-            🆘 BANTUAN
-
-        $commandList
+            🆘 BANTUAN\n\n$commandList
         """.trimIndent()
     }
 }
