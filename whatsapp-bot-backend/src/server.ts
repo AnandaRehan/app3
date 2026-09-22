@@ -1,11 +1,14 @@
 import Fastify from "fastify";
 import dotenv from "dotenv";
+import { aiRoutes } from "./routes/ai";
 
 dotenv.config();
 
 const app = Fastify({
     logger: true
 });
+
+await app.register(aiRoutes);
 
 app.get("/health", async () => {
     return {
