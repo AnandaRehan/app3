@@ -4,7 +4,10 @@ class AiProviderManager {
 
     private val providers: List<AiProvider> =
         listOf(
-            LocalAiService()
+            LocalAiService(),
+            OpenAiProvider(
+                endpoint = "https://api.openai.com/v1/responses"
+            )
         )
 
     private val providerMap =
