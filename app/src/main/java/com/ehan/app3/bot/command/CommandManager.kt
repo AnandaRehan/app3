@@ -18,23 +18,33 @@ class CommandManager {
     private val aiProviderManager =
         AiProviderManager()
 
-    private val commands: List<BotCommand> =
-        listOf(
-            MenuCommand(),
-            HelpCommand(),
-            ToolsCommand(),
-            StyleCommand(),
-            AllMenuCommand(),
-            DownloadCommand(),
-            AiCommand(aiProviderManager),
-            AiProviderCommand(aiProviderManager),
-            PingCommand(),
-            EchoCommand(),
-            CalcCommand()
-        )
+    private lateinit var commands: List<BotCommand>
 
-    private val commandMap =
-        commands.associateBy {
+    val allCommands: List<BotCommand>
+        get() = commands
+
+    init {
+        val basicCommands =
+            listOf<BotCommand>(
+                MenuCommand(),
+                ToolsCommand(),
+                StyleCommand(),
+                AllMenuCommand(),
+                DownloadCommand(),
+                AiCommand(aiProviderManager),
+                AiProviderCommand(aiProviderManager),
+                PingCommand(),
+                EchoCommand(),
+                CalcCommand()
+            )
+
+        commands =
+            basicCommands +
+            HelpCommand(basicCommands)
+    }
+
+    private val commandMap
+        get() = commands.associateBy {
             it.name.lowercase()
         }
 

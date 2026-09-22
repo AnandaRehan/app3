@@ -2,7 +2,9 @@ package com.ehan.app3.bot.command.commands
 
 import com.ehan.app3.bot.command.BotCommand
 
-class HelpCommand : BotCommand {
+class HelpCommand(
+    private val commands: List<BotCommand>
+) : BotCommand {
 
     override val name = "help"
 
@@ -10,23 +12,18 @@ class HelpCommand : BotCommand {
         "Menampilkan bantuan"
 
     override suspend fun execute(argument: String?): String {
+
+        val commandList =
+            commands
+              //  .filter { it.name != "help" }
+                .joinToString("\n") {
+                    "/${it.name} - ${it.description}"
+                }
+
         return """
             🆘 BANTUAN
 
-            /menu
-            Menampilkan menu utama.
-
-            /tools
-            Menampilkan tools.
-
-            /echo <teks>
-            Mengulang teks yang diberikan
-
-            /gaya <teks>
-            Membuat teks dengan format WhatsApp.
-
-            Contoh:
-            /gaya halo dunia
+            $commandList
         """.trimIndent()
     }
 }
