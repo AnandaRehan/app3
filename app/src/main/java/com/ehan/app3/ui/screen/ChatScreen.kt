@@ -111,6 +111,7 @@ fun ChatScreen(
         topBar = {
             Surface(
                 modifier = Modifier
+                    .fillMaxWidth()
                     .systemBarsPadding()
             ) {
                 ChatHeader(
@@ -122,6 +123,7 @@ fun ChatScreen(
         snackbarHost = {
             Surface(
                 modifier = Modifier
+                    .fillMaxWidth()
                     .systemBarsPadding()
             ) {
                 SnackbarHost(
