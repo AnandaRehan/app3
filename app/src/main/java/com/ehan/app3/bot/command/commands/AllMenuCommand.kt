@@ -23,6 +23,8 @@ class AllMenuCommand : BotCommand {
 
             🛠 TOOLS
             /tools
+            /ping
+            /echo <teks>
             /gaya italic <teks>
             /gaya bold <teks>
             /gaya mono <teks>

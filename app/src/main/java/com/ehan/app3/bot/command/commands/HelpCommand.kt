@@ -19,6 +19,9 @@ class HelpCommand : BotCommand {
             /tools
             Menampilkan tools.
 
+            /echo <teks>
+            Mengulang teks yang diberikan
+
             /gaya <teks>
             Membuat teks dengan format WhatsApp.
 

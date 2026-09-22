@@ -23,6 +23,8 @@ class MenuCommand : BotCommand {
 
             🛠 TOOLS
             /tools
+            /ping
+            /echo
 
             📋 SEMUA MENU
             /allmenu

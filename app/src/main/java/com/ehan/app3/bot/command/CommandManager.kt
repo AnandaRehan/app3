@@ -10,6 +10,7 @@ import com.ehan.app3.bot.command.commands.MenuCommand
 import com.ehan.app3.bot.command.commands.StyleCommand
 import com.ehan.app3.bot.command.commands.ToolsCommand
 import com.ehan.app3.bot.command.commands.PingCommand
+import com.ehan.app3.bot.command.commands.EchoCommand
 
 class CommandManager {
 
@@ -26,7 +27,8 @@ class CommandManager {
             DownloadCommand(),
             AiCommand(aiProviderManager),
             AiProviderCommand(aiProviderManager),
-            PingCommand()
+            PingCommand(),
+            EchoCommand()
         )
 
     private val commandMap =
