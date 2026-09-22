@@ -1,6 +1,8 @@
 package com.ehan.app3.bot.ai
 
-class LocalAiService : AiService {
+class LocalAiService : AiService, AiProvider {
+
+    override val name = "local"
 
     override suspend fun ask(prompt: String): String {
         val input = prompt.trim()

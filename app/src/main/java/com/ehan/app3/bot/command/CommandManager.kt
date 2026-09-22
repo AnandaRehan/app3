@@ -8,11 +8,12 @@ import com.ehan.app3.bot.command.commands.ToolsCommand
 import com.ehan.app3.bot.command.commands.AiCommand
 import com.ehan.app3.bot.command.commands.DownloadCommand
 import com.ehan.app3.bot.ai.LocalAiService
+import com.ehan.app3.bot.ai.AiProviderManager
 
 class CommandManager {
 
-    private val aiService =
-        LocalAiService()
+    private val aiProviderManager =
+        AiProviderManager()
 
     private val commands: List<BotCommand> =
         listOf(
@@ -22,7 +23,7 @@ class CommandManager {
             StyleCommand(),
             AllMenuCommand(),
             DownloadCommand(),
-            AiCommand(aiService)
+            AiCommand(aiProviderManager)
         )
 
     private val commandMap =
