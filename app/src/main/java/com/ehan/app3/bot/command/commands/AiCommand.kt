@@ -9,7 +9,7 @@ class AiCommand(
 
     override val name = "ai"
     override val description = "Menggunakan fitur AI"
-
+    override val category = "AI"
     override suspend fun execute(argument: String?): String {
 
         if (argument.isNullOrBlank()) {

@@ -10,6 +10,9 @@ class StyleCommand : BotCommand {
     override val description =
         "Membuat teks dengan berbagai gaya"
 
+    override val category =
+        "Tools"
+
     private val styleManager =
         TextStyleManager()
 

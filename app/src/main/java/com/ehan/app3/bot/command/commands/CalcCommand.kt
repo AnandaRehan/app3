@@ -9,6 +9,9 @@ class CalcCommand : BotCommand {
     override val description =
         "Menghitung operasi matematika sederhana"
 
+    override val category =
+        "Tools"
+
     override suspend fun execute(argument: String?): String {
 
         if (argument.isNullOrBlank()) {

@@ -9,6 +9,9 @@ class EchoCommand : BotCommand {
     override val description =
         "Mengulang teks yang diberikan"
 
+    override val category =
+        "Tools"
+
     override suspend fun execute(argument: String?): String {
 
         if (argument.isNullOrBlank()) {

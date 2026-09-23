@@ -9,6 +9,9 @@ class PingCommand : BotCommand {
     override val description =
         "Mengecek respons bot"
 
+    override val category =
+        "Tools"
+
     override suspend fun execute(argument: String?): String {
         return "🏓 Pong!"
     }
