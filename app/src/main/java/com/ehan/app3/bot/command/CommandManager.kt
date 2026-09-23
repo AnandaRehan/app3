@@ -28,7 +28,6 @@ class CommandManager {
             listOf<BotCommand>(
                 ToolsCommand(),
                 StyleCommand(),
-                AllMenuCommand(),
                 DownloadCommand(),
                 AiCommand(aiProviderManager),
                 AiProviderCommand(aiProviderManager),
@@ -39,7 +38,8 @@ class CommandManager {
 
         commands =
             listOf(
-                MenuCommand(basicCommands)
+                MenuCommand(basicCommands),
+                AllMenuCommand(basicCommands)
             ) +
             basicCommands +
             HelpCommand(basicCommands)

@@ -21,7 +21,7 @@ class HelpCommand(
                 }
 
         return """
-            🆘 BANTUAN${"\n"}${"\n"}$commandList
+            🆘 BANTUAN${"\n\n"}$commandList
         """.trimIndent()
     }
 }

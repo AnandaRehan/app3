@@ -27,7 +27,7 @@ class MenuCommand(
                 }
 
         return """
-            🤖 MENU BOT${"\n\n"}$commandList${"\n"}📋 SEMUA MENU${"\n"}/allmenu
+            🤖 MENU BOT${"\n\n"}$commandList${"\n"}/allmenu
 
             Ketik command di atas untuk membuka fiturnya.
         """.trimIndent()
