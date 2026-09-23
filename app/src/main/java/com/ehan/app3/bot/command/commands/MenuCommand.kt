@@ -16,7 +16,7 @@ class MenuCommand(
 
     override suspend fun execute(argument: String?): String {
 
-        val commandList =
+        val categories =
             commands
                 .filter {
                     it.name !in listOf(
@@ -25,12 +25,26 @@ class MenuCommand(
                         "allmenu"
                     )
                 }
-                .joinToString("\n") {
-                    "/${it.name}"
+                .groupBy {
+                    it.category
+                }
+
+        val menuText =
+            categories
+                .entries
+                .joinToString("\n\n") { (category, categoryCommands) ->
+
+                    val commandList =
+                        categoryCommands
+                            .joinToString("\n") {
+                                "/${it.name}"
+                            }
+
+                    "📂 $category\n$commandList"
                 }
 
         return """
-            🤖 MENU BOT${"\n\n"}$commandList${"\n"}/allmenu
+            🤖 MENU BOT${"\n\n"}$menuText${"\n\n"}📋 SEMUA MENU${"\n"}/allmenu
 
             Ketik command di atas untuk membuka fiturnya.
         """.trimIndent()
