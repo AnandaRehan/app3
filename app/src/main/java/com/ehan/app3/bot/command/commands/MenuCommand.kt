@@ -40,11 +40,11 @@ class MenuCommand(
                                 "/${it.name}"
                             }
 
-                    "📂 $category\n$commandList"
+                    "${" ".repeat(6)}📂 $category\n$commandList"
                 }
 
         return """
-            🤖 MENU BOT${"\n\n"}$menuText${"\n\n"}📋 SEMUA MENU${"\n"}/allmenu
+            🤖 MENU BOT${"\n\n"}$menuText${"\n\n"}${" ".repeat(6)}📋 SEMUA MENU${"\n"}/allmenu
 
             Ketik command di atas untuk membuka fiturnya.
         """.trimIndent()
