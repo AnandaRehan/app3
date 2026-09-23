@@ -11,6 +11,9 @@ class AllMenuCommand(
     override val description =
         "Menampilkan semua fitur bot"
 
+    override val category =
+        "General"
+
     override suspend fun execute(argument: String?): String {
 
         val commandList =

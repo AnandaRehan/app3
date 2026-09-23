@@ -11,6 +11,9 @@ class HelpCommand(
     override val description =
         "Menampilkan bantuan"
 
+    override val category =
+        "General"
+
     override suspend fun execute(argument: String?): String {
 
         val commandList =

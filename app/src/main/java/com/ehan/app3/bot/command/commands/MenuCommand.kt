@@ -11,6 +11,9 @@ class MenuCommand(
     override val description =
         "Menampilkan menu utama"
 
+    override val category =
+        "General"
+
     override suspend fun execute(argument: String?): String {
 
         val commandList =
