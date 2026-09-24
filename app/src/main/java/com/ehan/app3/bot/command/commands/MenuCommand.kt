@@ -16,6 +16,14 @@ class MenuCommand(
 
     override suspend fun execute(argument: String?): String {
 
+        val categoryOrder =
+            listOf(
+                "General",
+                "AI",
+                "Tools",
+                "Download"
+            )
+
         val categories =
             commands
                 .filter {
@@ -28,6 +36,14 @@ class MenuCommand(
                 .groupBy {
                     it.category
                 }
+                .toSortedMap(
+                    compareBy { category ->
+                        categoryOrder.indexOf(category)
+                            .let { index ->
+                                if (index == -1) Int.MAX_VALUE else index
+                            }
+                    }
+                )
 
         val menuText =
             categories
@@ -43,10 +59,11 @@ class MenuCommand(
                     "${" ".repeat(6)}📂 $category\n$commandList"
                 }
 
-        return """
-            🤖 MENU BOT${"\n\n"}$menuText${"\n\n"}${" ".repeat(6)}📋 SEMUA MENU${"\n"}/allmenu
+        return
+"""
+${" ".repeat(12)}🤖 MENU BOT${"\n\n"}$menuText${"\n\n"}${" ".repeat(6)}📋 SEMUA MENU${"\n"}/allmenu
 
-            Ketik command di atas untuk membuka fiturnya.
-        """.trimIndent()
+${" ".repeat(12)}Ketik command di atas untuk membuka fiturnya.
+""".trimIndent()
     }
 }

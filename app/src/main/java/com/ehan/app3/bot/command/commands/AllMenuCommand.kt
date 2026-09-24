@@ -16,15 +16,53 @@ class AllMenuCommand(
 
     override suspend fun execute(argument: String?): String {
 
-        val commandList =
+        val categoryOrder =
+            listOf(
+                "General",
+                "AI",
+                "Tools",
+                "Download"
+            )
+
+        val categories =
             commands
-                .filter { it.name != "allmenu" }
-                .joinToString("\n") {
-                    "/${it.name} - ${it.description}"
+                .filter {
+                    it.name !in listOf(
+                        "menu",
+                        "help",
+                        "allmenu"
+                    )
+                }
+                .groupBy {
+                    it.category
+                }
+                .toSortedMap(
+                    compareBy { category ->
+                        categoryOrder.indexOf(category)
+                            .let { index ->
+                                if (index == -1) Int.MAX_VALUE else index
+                            }
+                    }
+                )
+
+        val menuText =
+            categories
+                .entries
+                .joinToString("\n\n") { (category, categoryCommands) ->
+
+                    val commandList =
+                        categoryCommands
+                            .joinToString("\n") {
+                                "/${it.name} - ${it.description}"
+                            }
+
+                    "${" ".repeat(6)}📂 $category\n$commandList"
                 }
 
-        return """
-            📋 SEMUA MENU BOT${"\n\n"}$commandList
-        """.trimIndent()
+        return
+"""
+${" ".repeat(12)}📋 SEMUA MENU BOT${"\n\n"}$menuText
+""".trimIndent()
     }
 }
+

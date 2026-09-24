@@ -19,6 +19,7 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
@@ -240,7 +241,7 @@ fun ChatHeader(
             ) {
 
                 Text(
-                    text = "WhatsApp Bot",
+                    text = "App3 Bot",
                     color = Color.White
                 )
 
@@ -250,21 +251,26 @@ fun ChatHeader(
                     } else {
                         "● Offline"
                     },
-                    color = Color.White
+                    color = Color.White.copy(
+                        alpha = 0.8f
+                    )
                 )
             }
 
-            Text(
-                text = "Clear",
+            IconButton(
+                onClick = onClearChat
+            ) {
 
-                color = Color.White,
+                Icon(
+                    imageVector =
+                        Icons.Filled.DeleteSweep,
 
-                modifier = Modifier
-                    .clickable {
-                        onClearChat()
-                    }
-                    .padding(8.dp)
-            )
+                    contentDescription =
+                        "Hapus semua chat",
+
+                    tint = Color.White
+                )
+            }
         }
     }
 }
