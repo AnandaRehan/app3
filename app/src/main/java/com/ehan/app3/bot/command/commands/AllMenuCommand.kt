@@ -59,8 +59,7 @@ class AllMenuCommand(
                     "${" ".repeat(6)}📂 $category\n$commandList"
                 }
 
-        return
-"""
+        return """
 ${" ".repeat(12)}📋 SEMUA MENU BOT${"\n\n"}$menuText
 """.trimIndent()
     }

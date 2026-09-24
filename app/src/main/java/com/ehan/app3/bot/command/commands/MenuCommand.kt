@@ -59,8 +59,7 @@ class MenuCommand(
                     "${" ".repeat(6)}📂 $category\n$commandList"
                 }
 
-        return
-"""
+        return """
 ${" ".repeat(12)}🤖 MENU BOT${"\n\n"}$menuText${"\n\n"}${" ".repeat(6)}📋 SEMUA MENU${"\n"}/allmenu
 
 ${" ".repeat(12)}Ketik command di atas untuk membuka fiturnya.
