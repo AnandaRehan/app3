@@ -1,6 +1,7 @@
 package com.ehan.app3.ui.screen
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -20,6 +21,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
@@ -363,13 +365,20 @@ fun MessageInput(
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .navigationBarsPadding()
+            .navigationBarsPadding(),
+
+        tonalElevation = 3.dp
     ) {
 
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(8.dp)
+                .padding(
+                    start = 8.dp,
+                    top = 8.dp,
+                    end = 8.dp,
+                    bottom = 6.dp
+                )
         ) {
 
             Row(
@@ -442,14 +451,35 @@ fun MessageInput(
                         Text("Tulis pesan...")
                     },
 
-                    singleLine = true
+                    singleLine = true,
+
+                    shape = RoundedCornerShape(20.dp)
+                )
+
+                Spacer(
+                    modifier = Modifier.width(4.dp)
                 )
 
                 IconButton(
                     onClick = onSend,
 
                     enabled =
-                        text.isNotBlank()
+                        text.isNotBlank(),
+
+                    colors =
+                        IconButtonDefaults.iconButtonColors(
+                            containerColor =
+                                Color(0xFF075E54),
+
+                            contentColor =
+                                Color.White,
+
+                            disabledContainerColor =
+                                Color.LightGray,
+
+                            disabledContentColor =
+                                Color.DarkGray
+                        )
                 ) {
 
                     Icon(
