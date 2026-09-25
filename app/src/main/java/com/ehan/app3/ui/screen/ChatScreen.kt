@@ -293,7 +293,16 @@ fun MessageBubble(
     ) {
 
         Surface(
-            shape = RoundedCornerShape(12.dp),
+            modifier = Modifier.fillMaxWidth(
+                fraction = 0.85f
+            ),
+
+            shape = RoundedCornerShape(
+                topStart = 16.dp,
+                topEnd = 16.dp,
+                bottomStart = if (message.isBot) 4.dp else 16.dp,
+                bottomEnd = if (message.isBot) 16.dp else 4.dp
+            ),
 
             color =
                 if (message.isBot) {
@@ -305,10 +314,10 @@ fun MessageBubble(
 
             Row(
                 modifier = Modifier.padding(
-                    start = 12.dp,
-                    top = 8.dp,
-                    end = 4.dp,
-                    bottom = 8.dp
+                    start = 14.dp,
+                    top = 10.dp,
+                    end = 6.dp,
+                    bottom = 10.dp
                 ),
 
                 verticalAlignment =
@@ -316,14 +325,12 @@ fun MessageBubble(
             ) {
 
                 Text(
-                    text = message.text
+                    text = message.text,
+
+                    modifier = Modifier.weight(1f)
                 )
 
                 if (message.isBot) {
-
-                    Spacer(
-                        modifier = Modifier.width(4.dp)
-                    )
 
                     IconButton(
                         onClick = {
@@ -337,8 +344,7 @@ fun MessageBubble(
                     ) {
 
                         Text(
-                            text = "⧉",
-                            modifier = Modifier.padding(8.dp)
+                            text = "⧉"
                         )
                     }
                 }
