@@ -7,6 +7,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -14,8 +17,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
@@ -183,33 +184,71 @@ fun ChatScreen(
                 verticalArrangement =
                     Arrangement.spacedBy(8.dp)
             ) {
-
-                items(
-                    items = messages,
-                    key = { it.id }
-                ) { message ->
-
-                    MessageBubble(
-                        message = message
-                    )
-                }
-
-                if (isTyping) {
+                if (messages.isEmpty() && !isTyping) {
 
                     item {
 
-                        Text(
-                            text = "Bot sedang mengetik...",
+                        EmptyChatState()
+                    }
 
-                            modifier = Modifier.padding(
-                                start = 8.dp,
-                                bottom = 8.dp
-                            )
+                } else {
+
+                    items(
+                        items = messages,
+                        key = { it.id }
+                    ) { message ->
+
+                        MessageBubble(
+            message = message
                         )
                     }
-                }
+
+                    if (isTyping) {
+
+                        item {
+
+                            TypingIndicator()
+                        }
+                    }
+               }
             }
         }
+    }
+}
+
+@Composable
+fun EmptyChatState() {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(32.dp),
+
+        horizontalAlignment =
+            Alignment.CenterHorizontally,
+
+        verticalArrangement =
+            Arrangement.Center
+    ) {
+
+        Text(
+            text = "🤖"
+        )
+
+        Spacer(
+            modifier = Modifier.height(4.dp)
+        )
+
+        Text(
+            text = "Halo! Saya App3 Bot."
+        )
+
+        Spacer(
+            modifier = Modifier.height(2.dp)
+        )
+
+        Text(
+            text = "Ketik pesan atau gunakan /menu"
+        )
     }
 }
 
