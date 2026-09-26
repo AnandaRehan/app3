@@ -253,6 +253,34 @@ fun EmptyChatState() {
 }
 
 @Composable
+fun TypingIndicator() {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(
+                start = 8.dp,
+                end = 8.dp,
+                bottom = 8.dp
+            )
+    ) {
+
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            color = Color.White
+        ) {
+
+            Text(
+                text = "Bot sedang mengetik...",
+                modifier = Modifier.padding(
+                    horizontal = 14.dp,
+                    vertical = 10.dp
+                )
+            )
+        }
+    }
+}
+
+@Composable
 fun ChatHeader(
     isOnline: Boolean,
     onClearChat: () -> Unit
