@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.fillParentMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
@@ -222,20 +221,20 @@ fun ChatScreen(
 fun EmptyChatState() {
     Column(
         modifier = Modifier
-            .fillParentMaxSize()
+            .fillMaxWidth()
             .padding(32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text(text = "🤖")
+        Text("🤖")
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        Text(text = "Halo! Saya App3 Bot.")
+        Text("Halo! Saya App3 Bot.")
 
         Spacer(modifier = Modifier.height(4.dp))
 
-        Text(text = "Ketik pesan atau gunakan /menu")
+        Text("Ketik pesan atau gunakan /menu")
     }
 }
 
