@@ -165,9 +165,9 @@ fun ChatScreen(
         Surface(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
+                .padding(innerPadding),
+            color = Color(0xFFF3F6F5)
         ) {
-
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize(),
@@ -375,7 +375,7 @@ fun MessageBubble(
 
             color =
                 if (message.isBot) {
-                    Color.White
+                    Color(0xFFFFFFFF)
                 } else {
                     Color(0xFFD9FDD3)
                 }
