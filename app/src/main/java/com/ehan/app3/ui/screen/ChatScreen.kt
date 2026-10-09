@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -220,35 +221,20 @@ fun ChatScreen(
 fun EmptyChatState() {
     Column(
         modifier = Modifier
-            .fillMaxSize()
+            .fillParentMaxSize()
             .padding(32.dp),
-
-        horizontalAlignment =
-            Alignment.CenterHorizontally,
-
-        verticalArrangement =
-            Arrangement.Center
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
     ) {
+        Text(text = "🤖")
 
-        Text(
-            text = "🤖"
-        )
+        Spacer(modifier = Modifier.height(8.dp))
 
-        Spacer(
-            modifier = Modifier.height(4.dp)
-        )
+        Text(text = "Halo! Saya App3 Bot.")
 
-        Text(
-            text = "Halo! Saya App3 Bot."
-        )
+        Spacer(modifier = Modifier.height(4.dp))
 
-        Spacer(
-            modifier = Modifier.height(2.dp)
-        )
-
-        Text(
-            text = "Ketik pesan atau gunakan /menu"
-        )
+        Text(text = "Ketik pesan atau gunakan /menu")
     }
 }
 
