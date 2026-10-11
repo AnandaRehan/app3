@@ -3,12 +3,22 @@ package com.ehan.app3.bot.tiktok
 import android.content.Context
 import com.ehan.app3.App3
 import com.ehan.app3.BuildConfig
+import com.ehan.app3.bot.baileys.BaileysSocket
+import com.ehan.app3.bot.baileys.BotButton
+import com.ehan.app3.bot.baileys.BotMessageContent
+import com.ehan.app3.bot.baileys.ButtonText
+import com.ehan.app3.bot.baileys.MediaSource
+import com.ehan.app3.bot.baileys.SendMessageOptions
+import com.ehan.app3.bot.baileys.SlideMediaItem
+import com.ehan.app3.bot.baileys.SlideMediaType
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import java.text.NumberFormat
+import java.text.SimpleDateFormat
+import java.util.Date
 import java.util.Locale
 import java.util.concurrent.TimeUnit
+import kotlin.math.max
 
 class TikWmService {
 
@@ -24,23 +34,47 @@ class TikWmService {
         .build()
         .create(TikWmApi::class.java)
 
-    suspend fun downloadAndFormat(rawUrl: String): String {
+    /**
+     * Mengambil data TikTok dari API dan langsung mengirimkannya via `sock.sendMessage`
+     * ala @WhiskeySockets/baileys:
+     * - Jika Video -> kirim pesan Video + Caption (Kreator, Region, Durasi, Dibuat, Caption)
+     * - Jika 1 Foto -> kirim pesan Foto (Image) + Caption
+     * - Jika Slide (banyak foto atau gabungan foto + live_images video) -> kirim Carousel Slide menyatu + Caption
+     */
+    suspend fun sendTikTokMessage(
+        sock: BaileysSocket,
+        jid: String,
+        rawUrl: String,
+        options: SendMessageOptions = SendMessageOptions()
+    ) {
         val cleanUrl = extractTikTokUrl(rawUrl)
         if (cleanUrl == null) {
-            return """
-                ❌ URL TikTok tidak valid.
+            sock.sendMessage(
+                jid = jid,
+                content = BotMessageContent(
+                    text = """
+                        ❌ URL TikTok tidak valid.
 
-                Contoh penggunaan:
-                /tiktok https://vt.tiktok.com/ZSxxxxxx/
-                atau
-                /download https://www.tiktok.com/@user/video/123456
-            """.trimIndent()
+                        Contoh penggunaan:
+                        /tiktok https://vt.tiktok.com/ZSxxxxxx/
+                    """.trimIndent(),
+                    buttons = listOf(
+                        BotButton(
+                            buttonId = "/menu",
+                            buttonText = ButtonText("📋 Menu Utama"),
+                            type = BotButton.TYPE_REPLY
+                        )
+                    )
+                ),
+                options = options
+            )
+            return
         }
 
         val apiKey = getActiveApiKey()
         val isPlaceholderKey = apiKey.isEmpty()
 
-        return try {
+        try {
             val response = api.fetchTikTok(
                 url = cleanUrl,
                 hd = "1",
@@ -49,125 +83,258 @@ class TikWmService {
 
             if (!response.isSuccessful) {
                 val keyHint = if (isPlaceholderKey) {
-                    "\n\n💡 API Key belum diatur! Anda bisa mengaturnya dengan salah satu cara:\n" +
-                        "1. Ketik langsung di chat: /apikey <KEY_TIKWM_ANDA>\n" +
-                        "2. Di GitHub: Settings -> Secrets and variables -> Actions -> New repository secret dengan nama TIKWM_API_KEY\n" +
-                        "3. Di AI Studio: masukkan TIKWM_API_KEY di panel Secrets."
+                    "\n\n💡 API Key belum diatur! Ketik langsung di chat:\n/apikey <KEY_TIKWM_ANDA>"
                 } else {
                     ""
                 }
-                return "❌ HTTP ${response.code()}: ${response.message()}$keyHint"
+                sock.sendMessage(
+                    jid = jid,
+                    content = BotMessageContent(
+                        text = "❌ HTTP ${response.code()}: ${response.message()}$keyHint"
+                    ),
+                    options = options
+                )
+                return
             }
 
             val hasil = response.body()
-            if (hasil == null) {
-                return "❌ Gagal membaca response JSON dari server TikWM."
-            }
-
-            if (hasil.msg != "success" || hasil.data == null) {
-                val errDetail = hasil.error ?: hasil.msg ?: "Unknown error"
+            if (hasil == null || hasil.msg != "success" || hasil.data == null) {
+                val errDetail = hasil?.error ?: hasil?.msg ?: "Unknown error"
                 val keyHint = if (isPlaceholderKey) {
-                    "\n\n💡 API Key belum diatur! Ketik:\n/apikey <KEY_TIKWM_ANDA>\natau tambahkan secret TIKWM_API_KEY di GitHub Actions / AI Studio."
+                    "\n\n💡 Ketik di chat:\n/apikey <KEY_TIKWM_ANDA>\nuntuk memasang API key."
                 } else {
                     ""
                 }
-                return "❌ Gagal mengambil data TikTok: $errDetail$keyHint"
+                sock.sendMessage(
+                    jid = jid,
+                    content = BotMessageContent(
+                        text = "❌ Gagal mengambil data TikTok: $errDetail$keyHint"
+                    ),
+                    options = options
+                )
+                return
             }
 
-            formatSuccessResult(hasil.data, hasil.processedTime)
+            val data = hasil.data
+            val captionText = buildTikTokCaption(data)
+            val musicUrl = data.music?.takeIf { it.isNotBlank() }
+                ?: data.musicInfo?.play?.takeIf { it.isNotBlank() }
+
+            val images = data.images.orEmpty().filter { it.isNotBlank() }
+            val liveImages = data.liveImages.orEmpty()
+            val hasAnyLiveVideo = liveImages.any { !it.isNullOrBlank() }
+
+            when {
+                // Kasus 1: Hanya 1 Foto dan bukan Live Video -> Kirim Foto tunggal (image)
+                images.size == 1 && !hasAnyLiveVideo -> {
+                    val photoUrl = images.first()
+                    val buttons = buildList {
+                        add(
+                            BotButton(
+                                buttonId = "dl_photo_1",
+                                buttonText = ButtonText("⬇️ Unduh Foto HD"),
+                                type = BotButton.TYPE_URL_DOWNLOAD,
+                                url = photoUrl
+                            )
+                        )
+                        if (!musicUrl.isNullOrBlank()) {
+                            add(
+                                BotButton(
+                                    buttonId = "dl_audio",
+                                    buttonText = ButtonText("🎵 Unduh Audio MP3"),
+                                    type = BotButton.TYPE_URL_DOWNLOAD,
+                                    url = musicUrl
+                                )
+                            )
+                        }
+                    }
+
+                    sock.sendMessage(
+                        jid = jid,
+                        content = BotMessageContent(
+                            image = MediaSource(
+                                url = photoUrl,
+                                thumbnailUrl = data.cover ?: photoUrl,
+                                mimeType = "image/jpeg"
+                            ),
+                            audio = musicUrl?.let { MediaSource(url = it, mimeType = "audio/mpeg") },
+                            caption = captionText,
+                            footer = "📸 TikTok Photo • sock.sendMessage",
+                            buttons = buttons
+                        ),
+                        options = options
+                    )
+                }
+
+                // Kasus 2: Slide Foto / Gabungan Foto & Live Video -> Kirim Carousel Slide menyatu
+                images.isNotEmpty() || hasAnyLiveVideo -> {
+                    val totalSlides = max(images.size, liveImages.size)
+                    val slideItems = (0 until totalSlides).mapNotNull { index ->
+                        val imgUrl = images.getOrNull(index)?.takeIf { it.isNotBlank() }
+                        val liveVidUrl = liveImages.getOrNull(index)?.takeIf { it.isNotBlank() }
+
+                        when {
+                            liveVidUrl != null -> SlideMediaItem(
+                                type = SlideMediaType.VIDEO,
+                                url = liveVidUrl,
+                                imageUrl = imgUrl ?: data.cover,
+                                videoUrl = liveVidUrl,
+                                title = "Slide ${index + 1}/$totalSlides • Live Video"
+                            )
+                            imgUrl != null -> SlideMediaItem(
+                                type = SlideMediaType.IMAGE,
+                                url = imgUrl,
+                                imageUrl = imgUrl,
+                                videoUrl = null,
+                                title = "Slide ${index + 1}/$totalSlides • Foto"
+                            )
+                            else -> null
+                        }
+                    }
+
+                    val buttons = buildList {
+                        if (!musicUrl.isNullOrBlank()) {
+                            add(
+                                BotButton(
+                                    buttonId = "dl_audio",
+                                    buttonText = ButtonText("🎵 Unduh Audio MP3"),
+                                    type = BotButton.TYPE_URL_DOWNLOAD,
+                                    url = musicUrl
+                                )
+                            )
+                        }
+                        add(
+                            BotButton(
+                                buttonId = "/menu",
+                                buttonText = ButtonText("📋 Menu Bot"),
+                                type = BotButton.TYPE_REPLY
+                            )
+                        )
+                    }
+
+                    sock.sendMessage(
+                        jid = jid,
+                        content = BotMessageContent(
+                            carousel = slideItems,
+                            audio = musicUrl?.let { MediaSource(url = it, mimeType = "audio/mpeg") },
+                            caption = captionText,
+                            footer = "🖼️ Geser untuk lihat semua slide (${slideItems.size} media foto/video)",
+                            buttons = buttons
+                        ),
+                        options = options
+                    )
+                }
+
+                // Kasus 3: Video TikTok -> Kirim Video + Caption sesuai format yang diminta
+                else -> {
+                    val videoUrl = data.hdplay?.takeIf { it.isNotBlank() }
+                        ?: data.play?.takeIf { it.isNotBlank() }
+                        ?: data.wmplay.orEmpty()
+
+                    val buttons = buildList {
+                        if (videoUrl.isNotBlank()) {
+                            add(
+                                BotButton(
+                                    buttonId = "dl_video_hd",
+                                    buttonText = ButtonText("⬇️ Unduh Video HD"),
+                                    type = BotButton.TYPE_URL_DOWNLOAD,
+                                    url = videoUrl
+                                )
+                            )
+                        }
+                        if (!data.play.isNullOrBlank() && data.play != videoUrl) {
+                            add(
+                                BotButton(
+                                    buttonId = "dl_video_sd",
+                                    buttonText = ButtonText("⬇️ Video SD (No WM)"),
+                                    type = BotButton.TYPE_URL_DOWNLOAD,
+                                    url = data.play
+                                )
+                            )
+                        }
+                        if (!musicUrl.isNullOrBlank()) {
+                            add(
+                                BotButton(
+                                    buttonId = "dl_audio",
+                                    buttonText = ButtonText("🎵 Unduh Audio MP3"),
+                                    type = BotButton.TYPE_URL_DOWNLOAD,
+                                    url = musicUrl
+                                )
+                            )
+                        }
+                    }
+
+                    sock.sendMessage(
+                        jid = jid,
+                        content = BotMessageContent(
+                            video = MediaSource(
+                                url = videoUrl,
+                                thumbnailUrl = data.cover ?: data.originCover,
+                                mimeType = "video/mp4"
+                            ),
+                            audio = musicUrl?.let { MediaSource(url = it, mimeType = "audio/mpeg") },
+                            caption = captionText,
+                            footer = "🎬 TikTok Video HD • sock.sendMessage",
+                            buttons = buttons
+                        ),
+                        options = options
+                    )
+                }
+            }
         } catch (e: Exception) {
-            "❌ Gagal menghubungi server TikTok Downloader: ${e.message ?: "Unknown error"}"
+            sock.sendMessage(
+                jid = jid,
+                content = BotMessageContent(
+                    text = "❌ Gagal menghubungi server TikTok Downloader: ${e.message ?: "Unknown error"}"
+                ),
+                options = options
+            )
         }
     }
 
-    private fun formatSuccessResult(data: TikWmData, processedTime: Double?): String {
-        val sb = StringBuilder()
-        val isSlide = data.isPhotoSlide
-
-        sb.appendLine(if (isSlide) "📸 TIKTOK PHOTO SLIDE DOWNLOADER" else "🎬 TIKTOK VIDEO DOWNLOADER")
-        sb.appendLine("━━━━━━━━━━━━━━━━━━━━")
-
-        val authorName = data.author?.nickname ?: "Unknown"
-        val authorHandle = data.author?.uniqueId?.let { "@$it" } ?: ""
-        sb.appendLine("👤 Kreator: $authorName $authorHandle".trim())
-
-        if (!data.region.isNullOrBlank()) {
-            sb.appendLine("🌍 Region: ${data.region}")
+    suspend fun downloadAndFormat(rawUrl: String): String {
+        var fallbackResult = ""
+        val tempSock = BaileysSocket { msg ->
+            fallbackResult = msg.text
         }
-
-        if (!data.title.isNullOrBlank()) {
-            sb.appendLine("📝 Judul: ${data.title.trim()}")
-        }
-
-        if (!isSlide && (data.duration ?: 0) > 0) {
-            sb.appendLine("⏱️ Durasi: ${data.duration} detik")
-        } else if (isSlide) {
-            sb.appendLine("🖼️ Jumlah Slide: ${data.images?.size ?: 0} foto")
-        }
-
-        sb.appendLine()
-        sb.appendLine("📊 Statistik:")
-        sb.appendLine("👁️ ${formatNumber(data.playCount)} views • ❤️ ${formatNumber(data.diggCount)} likes")
-        sb.appendLine("💬 ${formatNumber(data.commentCount)} komentar • 🔄 ${formatNumber(data.shareCount)} shares • 🔖 ${formatNumber(data.collectCount)} disimpan")
-
-        data.musicInfo?.let { music ->
-            sb.appendLine()
-            sb.appendLine("🎵 Musik: ${music.title ?: "-"} (${music.author ?: "-"})")
-        }
-
-        if (!data.cover.isNullOrBlank()) {
-            sb.appendLine()
-            sb.appendLine("🖼️ [Thumbnail Cover](${data.cover})")
-        }
-
-        sb.appendLine()
-        sb.appendLine("📥 LINK UNDUHAN:")
-
-        if (isSlide) {
-            data.images?.forEachIndexed { index, imgUrl ->
-                sb.appendLine("• [Unduh Foto Slide #${index + 1}]($imgUrl)")
-            }
-            val validLiveImages = data.liveImages?.filterNotNull()?.filter { it.isNotBlank() }.orEmpty()
-            validLiveImages.forEachIndexed { index, liveUrl ->
-                sb.appendLine("• [Unduh Live Photo #${index + 1} (MP4)]($liveUrl)")
-            }
-        } else {
-            if (!data.hdplay.isNullOrBlank()) {
-                val hdSizeStr = formatBytes(data.hdSize)
-                sb.appendLine("• [Unduh Video HD (No Watermark)$hdSizeStr](${data.hdplay})")
-            }
-            if (!data.play.isNullOrBlank() && data.play != data.hdplay) {
-                val sdSizeStr = formatBytes(data.size)
-                sb.appendLine("• [Unduh Video SD (No Watermark)$sdSizeStr](${data.play})")
-            }
-            if (!data.wmplay.isNullOrBlank() && data.wmplay != data.play) {
-                val wmSizeStr = formatBytes(data.wmSize)
-                sb.appendLine("• [Unduh Video (Watermark)$wmSizeStr](${data.wmplay})")
-            }
-        }
-
-        val musicUrl = data.music?.takeIf { it.isNotBlank() } ?: data.musicInfo?.play?.takeIf { it.isNotBlank() }
-        if (!musicUrl.isNullOrBlank()) {
-            sb.appendLine("• [Unduh Audio / Musik (MP3)]($musicUrl)")
-        }
-
-        if (processedTime != null) {
-            sb.appendLine()
-            sb.append("⚡ Diproses dalam ${processedTime}s")
-        }
-
-        return sb.toString().trim()
+        sendTikTokMessage(
+            sock = tempSock,
+            jid = BaileysSocket.DEFAULT_CHAT_JID,
+            rawUrl = rawUrl
+        )
+        return fallbackResult
     }
 
-    private fun formatNumber(value: Long?): String {
-        if (value == null) return "0"
-        return NumberFormat.getNumberInstance(Locale("id", "ID")).format(value)
-    }
+    /**
+     * Format teks balasan sesuai permintaan:
+     * Kreator, Region, Durasi, Buat video nya kapan (Rabu, 21 Januari  pukul 23.34.42),
+     * terus Caption (judul).
+     */
+    fun buildTikTokCaption(data: TikWmData): String {
+        val authorNickname = data.author?.nickname?.takeIf { it.isNotBlank() } ?: "Unknown"
+        val authorUsername = data.author?.uniqueId?.takeIf { it.isNotBlank() }?.let { "(@$it)" } ?: ""
+        val kreator = "$authorNickname $authorUsername".trim()
 
-    private fun formatBytes(bytes: Long?): String {
-        if (bytes == null || bytes <= 0L) return ""
-        val mb = bytes.toDouble() / (1024.0 * 1024.0)
-        return String.format(Locale.US, " (%.2f MB)", mb)
+        val region = data.region?.takeIf { it.isNotBlank() } ?: "-"
+        val durasi = when {
+            (data.duration ?: 0) > 0 -> "${data.duration} detik"
+            !data.images.isNullOrEmpty() -> "${data.images.size} slide"
+            else -> "0 detik"
+        }
+        val dibuatKapan = formatCreateTime(data.createTime)
+        val captionJudul = data.title?.takeIf { it.isNotBlank() }
+            ?: data.contentDesc?.joinToString(" ")?.takeIf { it.isNotBlank() }
+            ?: "-"
+
+        return """
+            👤 Kreator : $kreator
+            🌍 Region : $region
+            ⏱️ Durasi : $durasi
+            📅 Dibuat : $dibuatKapan
+
+            📝 Caption :
+            ${captionJudul.trim()}
+        """.trimIndent()
     }
 
     companion object {
@@ -176,6 +343,19 @@ class TikWmService {
         private var inMemoryKey: String? = null
 
         private val URL_REGEX = Regex("""https?://[^\s]+""")
+
+        /**
+         * Contoh output: "Rabu, 21 Januari  pukul 23.34.42"
+         */
+        fun formatCreateTime(epochSeconds: Long?): String {
+            if (epochSeconds == null || epochSeconds <= 0L) return "-"
+            val date = Date(epochSeconds * 1000L)
+            val localeId = Locale("id", "ID")
+            val hari = SimpleDateFormat("EEEE", localeId).format(date)
+            val tanggalBulan = SimpleDateFormat("d MMMM", localeId).format(date)
+            val pukul = SimpleDateFormat("HH.mm.ss", localeId).format(date)
+            return "$hari, $tanggalBulan  pukul $pukul"
+        }
 
         fun saveCustomApiKey(newKey: String) {
             val clean = newKey.trim()

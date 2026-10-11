@@ -32,8 +32,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Reply
 import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.Check
@@ -45,9 +45,7 @@ import androidx.compose.material.icons.filled.FormatPaint
 import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.MusicNote
-import androidx.compose.material.icons.filled.OpenInNew
 import androidx.compose.material.icons.filled.Palette
-import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.SettingsBrightness
 import androidx.compose.material.icons.filled.SmartToy
 import androidx.compose.material.icons.filled.Speed
@@ -58,6 +56,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
@@ -72,7 +71,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
@@ -81,7 +79,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.AsyncImage
+import com.ehan.app3.bot.baileys.BaileysSocket
+import com.ehan.app3.bot.baileys.BotButton
 import com.ehan.app3.data.ChatMessage
 import com.ehan.app3.ui.theme.AppPalette
 import com.ehan.app3.ui.theme.ThemeMode
@@ -156,40 +155,7 @@ val QuickCommandList = listOf(
     )
 )
 
-private data class ParsedActionLink(
-    val label: String,
-    val url: String,
-    val isCover: Boolean
-)
-
-private val MARKDOWN_LINK_REGEX = Regex("""•?\s*🖼️?\s*\[([^\]]+)]\((https?://[^)]+)\)""")
-
-private fun parseMessageContent(rawText: String): Pair<String, List<ParsedActionLink>> {
-    val links = mutableListOf<ParsedActionLink>()
-    val cleanedLines = mutableListOf<String>()
-
-    rawText.lines().forEach { line ->
-        val match = MARKDOWN_LINK_REGEX.find(line)
-        if (match != null) {
-            val label = match.groupValues[1].trim()
-            val url = match.groupValues[2].trim()
-            val isCover = label.contains("Thumbnail", ignoreCase = true) ||
-                label.contains("Cover", ignoreCase = true)
-            links.add(ParsedActionLink(label = label, url = url, isCover = isCover))
-        } else {
-            cleanedLines.add(line)
-        }
-    }
-
-    val cleanText = cleanedLines
-        .joinToString("\n")
-        .replace(Regex("\n{3,}"), "\n\n")
-        .trim()
-
-    return cleanText to links
-}
-
-private fun enqueueFileDownload(
+fun enqueueFileDownload(
     context: Context,
     url: String,
     label: String,
@@ -198,7 +164,7 @@ private fun enqueueFileDownload(
     try {
         val ext = when {
             label.contains("MP3", ignoreCase = true) || label.contains("Audio", ignoreCase = true) -> "mp3"
-            label.contains("Foto", ignoreCase = true) || label.contains("Slide", ignoreCase = true) -> "jpg"
+            label.contains("Foto", ignoreCase = true) -> "jpg"
             else -> "mp4"
         }
         val fileName = "TikTok_${System.currentTimeMillis()}.$ext"
@@ -324,7 +290,7 @@ fun ChatHeader(
                             )
                     )
                     Text(
-                        text = if (isOnline) "Online • Siap merespon perintah" else "Offline • Mode Lokal Aktif",
+                        text = if (isOnline) "Online • Baileys Socket Aktif" else "Offline • Mode Lokal Aktif",
                         style = MaterialTheme.typography.bodySmall,
                         color = Color.White.copy(alpha = 0.92f)
                     )
@@ -557,7 +523,7 @@ fun EmptyChatState(
                                 modifier = Modifier.size(15.dp)
                             )
                             Text(
-                                text = "ASISTEN BOT & TIKTOK DOWNLOADER",
+                                text = "BAILEYS BOT & TIKTOK DOWNLOADER",
                                 style = MaterialTheme.typography.labelMedium,
                                 color = Color.White
                             )
@@ -575,7 +541,7 @@ fun EmptyChatState(
                     Spacer(modifier = Modifier.height(6.dp))
 
                     Text(
-                        text = "Tempel link TikTok secara langsung untuk unduh Video HD / Slide Foto tanpa watermark, atau pilih kartu perintah cepat di bawah.",
+                        text = "Tempel link TikTok langsung di chat untuk menerima balasan Video HD, Foto Tunggal, atau Slide Gabungan Foto & Video lengkap dengan tombol interaktif.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.White.copy(alpha = 0.92f)
                     )
@@ -699,7 +665,8 @@ fun EmptyChatState(
 fun MessageBubble(
     message: ChatMessage,
     currentAccentColor: String,
-    onCopied: (String) -> Unit
+    onCopied: (String) -> Unit,
+    onSendCommand: (String) -> Unit = {}
 ) {
     val context = LocalContext.current
     val clipboardManager = LocalClipboardManager.current
@@ -750,12 +717,11 @@ fun MessageBubble(
         )
 
         if (message.isBot) {
-            val (displayText, actionLinks) = parseMessageContent(message.text)
-            val coverLink = actionLinks.firstOrNull { it.isCover }
-            val downloadLinks = actionLinks.filterNot { it.isCover }
+            val payload = BaileysSocket.parsePayload(message.payloadJson)
+            val bodyText = payload?.caption ?: payload?.text ?: message.text
 
             Surface(
-                modifier = Modifier.widthIn(max = 335.dp),
+                modifier = Modifier.widthIn(max = 345.dp),
                 shape = bubbleShape,
                 color = MaterialTheme.colorScheme.surface,
                 tonalElevation = 3.dp,
@@ -767,85 +733,157 @@ fun MessageBubble(
             ) {
                 Column(
                     modifier = Modifier.padding(
-                        start = 14.dp,
+                        start = 12.dp,
                         top = 10.dp,
-                        end = 10.dp,
+                        end = 12.dp,
                         bottom = 8.dp
                     )
                 ) {
+                    // Header Row: Bot Name + Copy Button
                     Row(
-                        verticalAlignment = Alignment.Top
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Column(modifier = Modifier.weight(1f, fill = false)) {
-                            Text(
-                                text = "App3 Bot",
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.primary,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = displayText,
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                        }
+                        Text(
+                            text = "App3 Bot",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Bold
+                        )
 
                         IconButton(
                             onClick = {
-                                clipboardManager.setText(AnnotatedString(message.text))
-                                onCopied("Pesan disalin ke clipboard")
+                                clipboardManager.setText(AnnotatedString(bodyText))
+                                onCopied("Teks pesan disalin ke clipboard")
                             },
-                            modifier = Modifier
-                                .size(34.dp)
-                                .padding(start = 4.dp)
+                            modifier = Modifier.size(28.dp)
                         ) {
                             Icon(
                                 imageVector = Icons.Filled.ContentCopy,
                                 contentDescription = "Salin pesan",
                                 tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(17.dp)
+                                modifier = Modifier.size(15.dp)
                             )
                         }
                     }
 
-                    if (coverLink != null) {
-                        Spacer(modifier = Modifier.height(10.dp))
-                        AsyncImage(
-                            model = coverLink.url,
-                            contentDescription = "TikTok Cover Thumbnail",
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(165.dp)
-                                .clip(RoundedCornerShape(14.dp))
-                                .background(MaterialTheme.colorScheme.surfaceVariant)
+                    // Quoted Message Preview (mirip Baileys options: { quoted: msg })
+                    if (!payload?.quotedText.isNullOrBlank()) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(8.dp),
+                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .width(3.dp)
+                                        .height(22.dp)
+                                        .clip(RoundedCornerShape(2.dp))
+                                        .background(activePalette.previewPrimary)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = payload?.quotedText.orEmpty(),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                        }
+                    }
+
+                    // 1. Jika pesan memiliki VIDEO (Video TikTok) -> Putar Video langsung di bubble
+                    if (payload?.video != null && payload.video.url.isNotBlank()) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        InlineVideoPlayer(
+                            videoUrl = payload.video.url,
+                            thumbnailUrl = payload.video.thumbnailUrl,
+                            badgeLabel = "🎬 VIDEO HD",
+                            onDownloadClick = { url, label ->
+                                enqueueFileDownload(context, url, label, onCopied)
+                            }
                         )
                     }
 
-                    if (downloadLinks.isNotEmpty()) {
+                    // 2. Jika pesan memiliki FOTO TUNGGAL (Image) -> Tampilkan Foto di bubble
+                    if (payload?.image != null && payload.image.url.isNotBlank()) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        SingleImageViewer(
+                            image = payload.image,
+                            onDownloadClick = { url, label ->
+                                enqueueFileDownload(context, url, label, onCopied)
+                            }
+                        )
+                    }
+
+                    // 3. Jika pesan memiliki SLIDE CAROUSEL (Gabungan Foto & Video menyatu ala TikTok)
+                    if (!payload?.carousel.isNullOrEmpty()) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        TikTokCarouselViewer(
+                            slides = payload?.carousel.orEmpty(),
+                            accentColor = activePalette.previewPrimary,
+                            onDownloadClick = { url, label ->
+                                enqueueFileDownload(context, url, label, onCopied)
+                            }
+                        )
+                    }
+
+                    // 4. Teks / Caption Utama (Kreator, Region, Durasi, Dibuat, Caption)
+                    if (bodyText.isNotBlank()) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = bodyText,
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+
+                    // 5. Footer Baileys
+                    if (!payload?.footer.isNullOrBlank()) {
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = payload?.footer.orEmpty(),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
+                        )
+                    }
+
+                    // 6. Interactive Baileys Buttons (Reply Command Buttons & URL Download Buttons)
+                    val buttons = payload?.buttons.orEmpty()
+                    if (buttons.isNotEmpty()) {
                         Spacer(modifier = Modifier.height(10.dp))
+                        HorizontalDivider(
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
                         Column(
                             verticalArrangement = Arrangement.spacedBy(6.dp),
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            downloadLinks.forEachIndexed { idx, link ->
-                                val isPrimaryHd = idx == 0
+                            buttons.forEachIndexed { idx, btn ->
+                                val isDownloadBtn = btn.type == BotButton.TYPE_URL_DOWNLOAD && !btn.url.isNullOrBlank()
+                                val btnLabel = btn.buttonText.displayText
                                 val icon = when {
-                                    link.label.contains("Audio", ignoreCase = true) ||
-                                        link.label.contains("MP3", ignoreCase = true) -> Icons.Filled.MusicNote
-                                    link.label.contains("Foto", ignoreCase = true) ||
-                                        link.label.contains("Slide", ignoreCase = true) -> Icons.Filled.PhotoLibrary
-                                    else -> Icons.Filled.Download
+                                    btnLabel.contains("Audio", ignoreCase = true) ||
+                                        btnLabel.contains("MP3", ignoreCase = true) -> Icons.Filled.MusicNote
+                                    isDownloadBtn -> Icons.Filled.Download
+                                    else -> Icons.AutoMirrored.Filled.Reply
                                 }
 
-                                if (isPrimaryHd) {
+                                if (idx == 0 && isDownloadBtn) {
                                     Button(
                                         onClick = {
                                             enqueueFileDownload(
                                                 context = context,
-                                                url = link.url,
-                                                label = link.label,
+                                                url = btn.url.orEmpty(),
+                                                label = btnLabel,
                                                 onResult = onCopied
                                             )
                                         },
@@ -855,56 +893,52 @@ fun MessageBubble(
                                             containerColor = activePalette.previewPrimary,
                                             contentColor = Color.White
                                         ),
-                                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 10.dp)
+                                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 9.dp)
                                     ) {
                                         Icon(
                                             imageVector = icon,
                                             contentDescription = null,
-                                            modifier = Modifier.size(18.dp)
+                                            modifier = Modifier.size(17.dp)
                                         )
                                         Spacer(modifier = Modifier.width(8.dp))
                                         Text(
-                                            text = link.label,
-                                            style = MaterialTheme.typography.labelLarge,
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis
+                                            text = btnLabel,
+                                            style = MaterialTheme.typography.labelLarge
                                         )
                                     }
                                 } else {
                                     OutlinedButton(
                                         onClick = {
-                                            enqueueFileDownload(
-                                                context = context,
-                                                url = link.url,
-                                                label = link.label,
-                                                onResult = onCopied
-                                            )
+                                            if (isDownloadBtn) {
+                                                enqueueFileDownload(
+                                                    context = context,
+                                                    url = btn.url.orEmpty(),
+                                                    label = btnLabel,
+                                                    onResult = onCopied
+                                                )
+                                            } else {
+                                                onSendCommand(btn.buttonId)
+                                            }
                                         },
                                         modifier = Modifier.fillMaxWidth(),
                                         shape = RoundedCornerShape(12.dp),
-                                        border = BorderStroke(1.dp, activePalette.previewPrimary.copy(alpha = 0.5f)),
+                                        border = BorderStroke(
+                                            1.dp,
+                                            activePalette.previewPrimary.copy(alpha = 0.45f)
+                                        ),
                                         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
                                     ) {
                                         Icon(
                                             imageVector = icon,
                                             contentDescription = null,
                                             tint = activePalette.previewPrimary,
-                                            modifier = Modifier.size(17.dp)
+                                            modifier = Modifier.size(16.dp)
                                         )
                                         Spacer(modifier = Modifier.width(8.dp))
                                         Text(
-                                            text = link.label,
+                                            text = btnLabel,
                                             style = MaterialTheme.typography.labelLarge,
-                                            color = MaterialTheme.colorScheme.onSurface,
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis,
-                                            modifier = Modifier.weight(1f)
-                                        )
-                                        Icon(
-                                            imageVector = Icons.Filled.OpenInNew,
-                                            contentDescription = null,
-                                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            modifier = Modifier.size(15.dp)
+                                            color = MaterialTheme.colorScheme.onSurface
                                         )
                                     }
                                 }

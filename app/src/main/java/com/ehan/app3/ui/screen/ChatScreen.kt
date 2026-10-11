@@ -209,6 +209,9 @@ fun ChatScreen(
                                 scope.launch {
                                     snackbarHostState.showSnackbar(snackbarMsg)
                                 }
+                            },
+                            onSendCommand = { commandId ->
+                                viewModel.sendMessage(commandId)
                             }
                         )
                     }

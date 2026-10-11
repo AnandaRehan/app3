@@ -9,7 +9,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
     entities = [ChatMessage::class],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 abstract class ChatDatabase : RoomDatabase() {
@@ -68,6 +68,19 @@ abstract class ChatDatabase : RoomDatabase() {
                 }
             }
 
+        private val MIGRATION_3_4 =
+            object : Migration(3, 4) {
+                override fun migrate(db: SupportSQLiteDatabase) {
+                    db.execSQL(
+                        """
+                        ALTER TABLE messages
+                        ADD COLUMN payloadJson TEXT
+                        DEFAULT NULL
+                        """
+                    )
+                }
+            }
+
         fun getDatabase(
             context: Context
         ): ChatDatabase {
@@ -82,8 +95,10 @@ abstract class ChatDatabase : RoomDatabase() {
                     )
                         .addMigrations(
                             MIGRATION_1_2,
-                            MIGRATION_2_3
+                            MIGRATION_2_3,
+                            MIGRATION_3_4
                         )
+                        .fallbackToDestructiveMigration()
                         .build()
 
                 INSTANCE = instance

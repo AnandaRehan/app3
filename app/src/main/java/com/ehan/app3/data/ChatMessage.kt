@@ -19,5 +19,7 @@ data class ChatMessage(
         "PENDING"
     },
 
-    val timestamp: Long = System.currentTimeMillis()
+    val timestamp: Long = System.currentTimeMillis(),
+
+    val payloadJson: String? = null
 )

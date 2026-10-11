@@ -1,6 +1,12 @@
 package com.ehan.app3.bot.command.commands
 
+import com.ehan.app3.bot.baileys.BaileysSocket
+import com.ehan.app3.bot.baileys.BotButton
+import com.ehan.app3.bot.baileys.BotMessageContent
+import com.ehan.app3.bot.baileys.ButtonText
+import com.ehan.app3.bot.baileys.SendMessageOptions
 import com.ehan.app3.bot.command.BotCommand
+import com.ehan.app3.data.ChatMessage
 
 class MenuCommand(
     private val commands: List<BotCommand>
@@ -53,16 +59,57 @@ class MenuCommand(
                     val commandList =
                         categoryCommands
                             .joinToString("\n") {
-                                "/${it.name}"
+                                "• /${it.name} — ${it.description}"
                             }
 
-                    "${" ".repeat(6)}📂 $category\n$commandList"
+                    "📂 $category\n$commandList"
                 }
 
         return """
-${" ".repeat(12)}🤖 MENU BOT${"\n\n"}$menuText${"\n\n"}${" ".repeat(6)}📋 SEMUA MENU${"\n"}/allmenu
+🤖 MENU UTAMA APP3 BOT
 
-${" ".repeat(12)}Ketik command di atas untuk membuka fiturnya.
-""".trimIndent()
+$menuText
+
+📋 Lihat detail semua perintah: /allmenu
+        """.trimIndent()
+    }
+
+    override suspend fun execute(
+        sock: BaileysSocket,
+        jid: String,
+        argument: String?,
+        quoted: ChatMessage?
+    ) {
+        val text = execute(argument)
+        sock.sendMessage(
+            jid = jid,
+            content = BotMessageContent(
+                text = text,
+                footer = "Pilih tombol cepat di bawah • @WhiskeySockets/baileys",
+                buttons = listOf(
+                    BotButton(
+                        buttonId = "/tiktok",
+                        buttonText = ButtonText("🎬 TikTok HD"),
+                        type = BotButton.TYPE_REPLY
+                    ),
+                    BotButton(
+                        buttonId = "/ai Halo!",
+                        buttonText = ButtonText("🤖 Tanya AI"),
+                        type = BotButton.TYPE_REPLY
+                    ),
+                    BotButton(
+                        buttonId = "/tools",
+                        buttonText = ButtonText("🛠️ Tools"),
+                        type = BotButton.TYPE_REPLY
+                    ),
+                    BotButton(
+                        buttonId = "/allmenu",
+                        buttonText = ButtonText("📋 Semua Menu"),
+                        type = BotButton.TYPE_REPLY
+                    )
+                )
+            ),
+            options = SendMessageOptions(quoted = quoted)
+        )
     }
 }

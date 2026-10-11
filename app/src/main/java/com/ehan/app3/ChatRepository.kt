@@ -1,6 +1,7 @@
 package com.ehan.app3
 
 import com.ehan.app3.bot.BotEngine
+import com.ehan.app3.bot.baileys.BaileysSocket
 import com.ehan.app3.data.ChatDao
 import com.ehan.app3.data.ChatMessage
 import kotlinx.coroutines.delay
@@ -11,6 +12,14 @@ class ChatRepository(
 
     private val botEngine =
         BotEngine()
+
+    /**
+     * Instance socket ala @WhiskeySockets/baileys (`sock.sendMessage`)
+     * yang otomatis menyimpan setiap pesan keluar ke database Room.
+     */
+    val sock = BaileysSocket { botMessage ->
+        chatDao.insertMessage(botMessage)
+    }
 
     fun getMessages() =
         chatDao.getAllMessages()
@@ -45,17 +54,12 @@ class ChatRepository(
 
             try {
 
-                delay(700)
+                delay(400)
 
-                val reply =
-                    botEngine.reply(message.text)
-
-                chatDao.insertMessage(
-                    ChatMessage(
-                        text = reply,
-                        isBot = true,
-                        status = "PROCESSED"
-                    )
+                botEngine.handleMessage(
+                    sock = sock,
+                    jid = BaileysSocket.DEFAULT_CHAT_JID,
+                    userMessage = message
                 )
 
                 chatDao.markAsProcessed(
