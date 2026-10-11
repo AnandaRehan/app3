@@ -12,6 +12,7 @@ import com.ehan.app3.bot.command.commands.ToolsCommand
 import com.ehan.app3.bot.command.commands.PingCommand
 import com.ehan.app3.bot.command.commands.EchoCommand
 import com.ehan.app3.bot.command.commands.CalcCommand
+import com.ehan.app3.bot.command.commands.StatusCommand
 
 class CommandManager {
 
@@ -33,8 +34,9 @@ class CommandManager {
                 AiProviderCommand(aiProviderManager),
                 PingCommand(),
                 EchoCommand(),
-                CalcCommand()
-            )
+                CalcCommand(),
+                StatusCommand(aiProviderManager)
+           )
 
         commands =
             listOf(
