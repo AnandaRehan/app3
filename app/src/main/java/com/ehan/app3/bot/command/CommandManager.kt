@@ -4,17 +4,21 @@ import com.ehan.app3.bot.ai.AiProviderManager
 import com.ehan.app3.bot.command.commands.AiCommand
 import com.ehan.app3.bot.command.commands.AiProviderCommand
 import com.ehan.app3.bot.command.commands.AllMenuCommand
+import com.ehan.app3.bot.command.commands.CalcCommand
 import com.ehan.app3.bot.command.commands.DownloadCommand
+import com.ehan.app3.bot.command.commands.EchoCommand
 import com.ehan.app3.bot.command.commands.HelpCommand
 import com.ehan.app3.bot.command.commands.MenuCommand
-import com.ehan.app3.bot.command.commands.StyleCommand
-import com.ehan.app3.bot.command.commands.ToolsCommand
 import com.ehan.app3.bot.command.commands.PingCommand
-import com.ehan.app3.bot.command.commands.EchoCommand
-import com.ehan.app3.bot.command.commands.CalcCommand
 import com.ehan.app3.bot.command.commands.StatusCommand
+import com.ehan.app3.bot.command.commands.StyleCommand
+import com.ehan.app3.bot.command.commands.TikTokCommand
+import com.ehan.app3.bot.command.commands.ToolsCommand
+import com.ehan.app3.bot.tiktok.TikWmService
 
-class CommandManager {
+class CommandManager(
+    private val tikWmService: TikWmService = TikWmService()
+) {
 
     private val aiProviderManager =
         AiProviderManager()
@@ -27,16 +31,17 @@ class CommandManager {
     init {
         val basicCommands =
             listOf<BotCommand>(
+                TikTokCommand(tikWmService),
+                DownloadCommand(tikWmService),
                 ToolsCommand(),
                 StyleCommand(),
-                DownloadCommand(),
                 AiCommand(aiProviderManager),
                 AiProviderCommand(aiProviderManager),
                 PingCommand(),
                 EchoCommand(),
                 CalcCommand(),
                 StatusCommand(aiProviderManager)
-           )
+            )
 
         commands =
             listOf(
@@ -70,8 +75,14 @@ class CommandManager {
                 delimiters = arrayOf(" ")
             )
 
-        val commandName =
+        val rawCommandName =
             parts[0].lowercase()
+
+        val commandName = when (rawCommandName) {
+            "tt", "tikwm" -> "tiktok"
+            "dl" -> "download"
+            else -> rawCommandName
+        }
 
         val argument =
             parts.getOrNull(1)?.trim()

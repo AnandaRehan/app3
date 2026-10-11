@@ -205,9 +205,9 @@ fun ChatScreen(
                         MessageBubble(
                             message = message,
                             currentAccentColor = userPreferences.accentColor,
-                            onCopied = {
+                            onCopied = { snackbarMsg ->
                                 scope.launch {
-                                    snackbarHostState.showSnackbar("Pesan disalin ke clipboard")
+                                    snackbarHostState.showSnackbar(snackbarMsg)
                                 }
                             }
                         )
