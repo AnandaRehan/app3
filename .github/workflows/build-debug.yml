@@ -32,6 +32,18 @@ jobs:
       - name: Beri Izin Akses Gradle
         run: chmod +x gradlew
 
+      - name: Create .env from GitHub Secrets
+        env:
+          TIKWM_API_KEY: ${{ secrets.TIKWM_API_KEY }}
+        run: |
+          if [ -n "$TIKWM_API_KEY" ]; then
+            echo "TIKWM_API_KEY=$TIKWM_API_KEY" > .env
+            echo ".env created with TIKWM_API_KEY from GitHub Secrets."
+          else
+            cp .env.example .env
+            echo "WARNING: TIKWM_API_KEY secret is not set in GitHub repository secrets. Using .env.example."
+          fi
+
       - name: Run Unit Tests & Capture Screenshots
         run: |
           ./gradlew recordRoborazziDebug testDebugUnitTest --no-daemon --stacktrace || echo "Tests or screenshot recording completed"

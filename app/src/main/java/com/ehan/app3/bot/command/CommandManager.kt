@@ -81,11 +81,18 @@ class CommandManager(
         val commandName = when (rawCommandName) {
             "tt", "tikwm" -> "tiktok"
             "dl" -> "download"
+            "apikey", "setkey" -> "tiktok"
             else -> rawCommandName
         }
 
-        val argument =
+        val rawArgument =
             parts.getOrNull(1)?.trim()
+
+        val argument = if (rawCommandName == "apikey" || rawCommandName == "setkey") {
+            if (rawArgument.isNullOrBlank()) null else "key $rawArgument"
+        } else {
+            rawArgument
+        }
 
         val command =
             commandMap[commandName]

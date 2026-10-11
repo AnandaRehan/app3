@@ -1,5 +1,7 @@
 package com.ehan.app3.bot.tiktok
 
+import android.content.Context
+import com.ehan.app3.App3
 import com.ehan.app3.BuildConfig
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
@@ -35,19 +37,22 @@ class TikWmService {
             """.trimIndent()
         }
 
-        val apiKey = BuildConfig.TIKWM_API_KEY.trim()
-        val isPlaceholderKey = apiKey.isEmpty() || apiKey == "YOUR_TIKWM_API_KEY"
+        val apiKey = getActiveApiKey()
+        val isPlaceholderKey = apiKey.isEmpty()
 
         return try {
             val response = api.fetchTikTok(
                 url = cleanUrl,
                 hd = "1",
-                apiKey = if (isPlaceholderKey) "" else apiKey
+                apiKey = apiKey
             )
 
             if (!response.isSuccessful) {
                 val keyHint = if (isPlaceholderKey) {
-                    "\n\n💡 Pastikan Anda sudah mengisi TIKWM_API_KEY di panel Secrets AI Studio."
+                    "\n\n💡 API Key belum diatur! Anda bisa mengaturnya dengan salah satu cara:\n" +
+                        "1. Ketik langsung di chat: /apikey <KEY_TIKWM_ANDA>\n" +
+                        "2. Di GitHub: Settings -> Secrets and variables -> Actions -> New repository secret dengan nama TIKWM_API_KEY\n" +
+                        "3. Di AI Studio: masukkan TIKWM_API_KEY di panel Secrets."
                 } else {
                     ""
                 }
@@ -62,7 +67,7 @@ class TikWmService {
             if (hasil.msg != "success" || hasil.data == null) {
                 val errDetail = hasil.error ?: hasil.msg ?: "Unknown error"
                 val keyHint = if (isPlaceholderKey) {
-                    "\n\n💡 Tips: Masukkan TIKWM_API_KEY Anda melalui panel Secrets di AI Studio."
+                    "\n\n💡 API Key belum diatur! Ketik:\n/apikey <KEY_TIKWM_ANDA>\natau tambahkan secret TIKWM_API_KEY di GitHub Actions / AI Studio."
                 } else {
                     ""
                 }
@@ -166,7 +171,41 @@ class TikWmService {
     }
 
     companion object {
+        private const val PREFS_NAME = "tikwm_config_prefs"
+        private const val KEY_CUSTOM_API_KEY = "custom_tikwm_api_key"
+        private var inMemoryKey: String? = null
+
         private val URL_REGEX = Regex("""https?://[^\s]+""")
+
+        fun saveCustomApiKey(newKey: String) {
+            val clean = newKey.trim()
+            inMemoryKey = clean
+            try {
+                val prefs = App3.instance.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                prefs.edit().putString(KEY_CUSTOM_API_KEY, clean).apply()
+            } catch (_: Exception) {
+            }
+        }
+
+        fun getActiveApiKey(): String {
+            val savedKey = try {
+                val prefs = App3.instance.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                prefs.getString(KEY_CUSTOM_API_KEY, null)?.trim()
+            } catch (_: Exception) {
+                inMemoryKey
+            }
+
+            if (!savedKey.isNullOrEmpty()) {
+                return savedKey
+            }
+
+            val buildConfigKey = BuildConfig.TIKWM_API_KEY.trim()
+            return if (buildConfigKey.isNotEmpty() && buildConfigKey != "YOUR_TIKWM_API_KEY") {
+                buildConfigKey
+            } else {
+                ""
+            }
+        }
 
         fun extractTikTokUrl(input: String): String? {
             val match = URL_REGEX.find(input)?.value ?: return null
