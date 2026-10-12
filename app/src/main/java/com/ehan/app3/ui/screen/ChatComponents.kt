@@ -11,9 +11,11 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -32,13 +34,16 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Reply
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.FormatPaint
@@ -46,6 +51,7 @@ import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material.icons.filled.SettingsBrightness
 import androidx.compose.material.icons.filled.SmartToy
 import androidx.compose.material.icons.filled.Speed
@@ -159,17 +165,20 @@ fun enqueueFileDownload(
     context: Context,
     url: String,
     label: String,
+    customFileName: String? = null,
     onResult: (String) -> Unit
 ) {
     try {
         val ext = when {
             label.contains("MP3", ignoreCase = true) || label.contains("Audio", ignoreCase = true) -> "mp3"
-            label.contains("Foto", ignoreCase = true) -> "jpg"
+            label.contains("Foto", ignoreCase = true) || label.contains(".jpg", ignoreCase = true) -> "jpg"
             else -> "mp4"
         }
-        val fileName = "TikTok_${System.currentTimeMillis()}.$ext"
+        val fileName = customFileName?.trim()?.takeIf { it.isNotEmpty() }
+            ?: "${System.currentTimeMillis()}.$ext"
+
         val request = DownloadManager.Request(Uri.parse(url))
-            .setTitle(label)
+            .setTitle(fileName)
             .setDescription("Mengunduh $fileName")
             .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
             .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName)
@@ -206,12 +215,17 @@ fun ChatHeader(
     currentThemeMode: String,
     currentAccentColor: String,
     showThemeStudio: Boolean,
+    selectedCount: Int = 0,
+    onCancelSelection: () -> Unit = {},
+    onCopySelected: () -> Unit = {},
+    onDeleteSelected: () -> Unit = {},
     onToggleThemeStudio: () -> Unit,
     onThemeModeChange: (String) -> Unit,
     onAccentColorChange: (String) -> Unit,
     onClearChat: () -> Unit
 ) {
     val activePalette = AppPalette.fromKey(currentAccentColor)
+    val isSelectionMode = selectedCount > 0
     val headerBrush = Brush.horizontalGradient(
         colors = listOf(
             activePalette.previewPrimary,
@@ -226,105 +240,172 @@ fun ChatHeader(
             .background(headerBrush)
             .statusBarsPadding()
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 14.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
+        if (isSelectionMode) {
+            // WhatsApp-style Contextual Selection Action Bar
+            Row(
                 modifier = Modifier
-                    .size(46.dp)
-                    .clip(CircleShape)
-                    .background(Color.White.copy(alpha = 0.22f))
-                    .border(1.5.dp, Color.White.copy(alpha = 0.6f), CircleShape),
-                contentAlignment = Alignment.Center
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp, vertical = 14.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    imageVector = Icons.Filled.SmartToy,
-                    contentDescription = "Bot Avatar",
-                    tint = Color.White,
-                    modifier = Modifier.size(26.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.width(12.dp))
-
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text(
-                        text = "App3 Bot Studio",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = Color.White
+                IconButton(
+                    onClick = onCancelSelection,
+                    modifier = Modifier.testTag("cancel_selection_button"),
+                    colors = IconButtonDefaults.iconButtonColors(
+                        containerColor = Color.White.copy(alpha = 0.18f),
+                        contentColor = Color.White
                     )
-                    Surface(
-                        shape = RoundedCornerShape(50),
-                        color = Color.White.copy(alpha = 0.2f)
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Batal pilih"
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(12.dp))
+
+                Text(
+                    text = "$selectedCount dipilih",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = Color.White,
+                    modifier = Modifier.weight(1f)
+                )
+
+                // Tombol Copy HANYA muncul jika pesan yang dipilih cuma 1
+                if (selectedCount == 1) {
+                    IconButton(
+                        onClick = onCopySelected,
+                        modifier = Modifier.testTag("copy_selected_button"),
+                        colors = IconButtonDefaults.iconButtonColors(
+                            containerColor = Color.White.copy(alpha = 0.18f),
+                            contentColor = Color.White
+                        )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.ContentCopy,
+                            contentDescription = "Salin pesan"
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(6.dp))
+                }
+
+                // Tombol Delete selalu muncul saat ada >= 1 pesan terpilih
+                IconButton(
+                    onClick = onDeleteSelected,
+                    modifier = Modifier.testTag("delete_selected_button"),
+                    colors = IconButtonDefaults.iconButtonColors(
+                        containerColor = Color.White.copy(alpha = 0.18f),
+                        contentColor = Color.White
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Delete,
+                        contentDescription = "Hapus pesan terpilih"
+                    )
+                }
+            }
+        } else {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(46.dp)
+                        .clip(CircleShape)
+                        .background(Color.White.copy(alpha = 0.22f))
+                        .border(1.5.dp, Color.White.copy(alpha = 0.6f), CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.SmartToy,
+                        contentDescription = "Bot Avatar",
+                        tint = Color.White,
+                        modifier = Modifier.size(26.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(12.dp))
+
+                Column(
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text(
-                            text = activePalette.displayName,
-                            style = MaterialTheme.typography.labelMedium,
-                            color = Color.White,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                            text = "App3 Bot Studio",
+                            style = MaterialTheme.typography.titleLarge,
+                            color = Color.White
+                        )
+                        Surface(
+                            shape = RoundedCornerShape(50),
+                            color = Color.White.copy(alpha = 0.2f)
+                        ) {
+                            Text(
+                                text = activePalette.displayName,
+                                style = MaterialTheme.typography.labelMedium,
+                                color = Color.White,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(3.dp))
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(9.dp)
+                                .clip(CircleShape)
+                                .background(
+                                    if (isOnline) Color(0xFF4ADE80) else Color(0xFFFBBF24)
+                                )
+                        )
+                        Text(
+                            text = if (isOnline) "Online • Baileys Socket Aktif" else "Offline • Mode Lokal Aktif",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.White.copy(alpha = 0.92f)
                         )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(3.dp))
-
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(9.dp)
-                            .clip(CircleShape)
-                            .background(
-                                if (isOnline) Color(0xFF4ADE80) else Color(0xFFFBBF24)
-                            )
+                IconButton(
+                    onClick = onToggleThemeStudio,
+                    modifier = Modifier.testTag("toggle_theme_studio_button"),
+                    colors = IconButtonDefaults.iconButtonColors(
+                        containerColor = if (showThemeStudio) Color.White else Color.White.copy(alpha = 0.18f),
+                        contentColor = if (showThemeStudio) activePalette.previewPrimary else Color.White
                     )
-                    Text(
-                        text = if (isOnline) "Online • Baileys Socket Aktif" else "Offline • Mode Lokal Aktif",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color.White.copy(alpha = 0.92f)
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Palette,
+                        contentDescription = "Ubah Warna & Tema"
                     )
                 }
-            }
 
-            IconButton(
-                onClick = onToggleThemeStudio,
-                modifier = Modifier.testTag("toggle_theme_studio_button"),
-                colors = IconButtonDefaults.iconButtonColors(
-                    containerColor = if (showThemeStudio) Color.White else Color.White.copy(alpha = 0.18f),
-                    contentColor = if (showThemeStudio) activePalette.previewPrimary else Color.White
-                )
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Palette,
-                    contentDescription = "Ubah Warna & Tema"
-                )
-            }
+                Spacer(modifier = Modifier.width(4.dp))
 
-            Spacer(modifier = Modifier.width(4.dp))
-
-            IconButton(
-                onClick = onClearChat,
-                modifier = Modifier.testTag("clear_chat_button"),
-                colors = IconButtonDefaults.iconButtonColors(
-                    containerColor = Color.White.copy(alpha = 0.18f),
-                    contentColor = Color.White
-                )
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.DeleteSweep,
-                    contentDescription = "Hapus semua chat"
-                )
+                IconButton(
+                    onClick = onClearChat,
+                    modifier = Modifier.testTag("clear_chat_button"),
+                    colors = IconButtonDefaults.iconButtonColors(
+                        containerColor = Color.White.copy(alpha = 0.18f),
+                        contentColor = Color.White
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.DeleteSweep,
+                        contentDescription = "Hapus semua chat"
+                    )
+                }
             }
         }
 
@@ -661,15 +742,19 @@ fun EmptyChatState(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun MessageBubble(
     message: ChatMessage,
     currentAccentColor: String,
+    isSelectionMode: Boolean = false,
+    isSelected: Boolean = false,
+    onToggleSelect: () -> Unit = {},
+    onLongPressSelect: () -> Unit = {},
     onCopied: (String) -> Unit,
     onSendCommand: (String) -> Unit = {}
 ) {
     val context = LocalContext.current
-    val clipboardManager = LocalClipboardManager.current
     val activePalette = AppPalette.fromKey(currentAccentColor)
     val timeFormatted = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(message.timestamp))
 
@@ -680,13 +765,51 @@ fun MessageBubble(
         )
     )
 
+    val rowHighlightColor = if (isSelected) {
+        activePalette.previewPrimary.copy(alpha = 0.18f)
+    } else {
+        Color.Transparent
+    }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 2.dp),
+            .clip(RoundedCornerShape(14.dp))
+            .background(rowHighlightColor)
+            .combinedClickable(
+                onClick = {
+                    if (isSelectionMode) {
+                        onToggleSelect()
+                    }
+                },
+                onLongClick = {
+                    onLongPressSelect()
+                }
+            )
+            .padding(horizontal = 4.dp, vertical = 4.dp),
         horizontalArrangement = if (message.isBot) Arrangement.Start else Arrangement.End,
         verticalAlignment = Alignment.Bottom
     ) {
+        if (isSelectionMode) {
+            Icon(
+                imageVector = if (isSelected) {
+                    Icons.Filled.CheckCircle
+                } else {
+                    Icons.Filled.RadioButtonUnchecked
+                },
+                contentDescription = if (isSelected) "Terpilih" else "Belum dipilih",
+                tint = if (isSelected) {
+                    activePalette.previewPrimary
+                } else {
+                    MaterialTheme.colorScheme.outline
+                },
+                modifier = Modifier
+                    .align(Alignment.CenterVertically)
+                    .padding(end = 8.dp)
+                    .size(22.dp)
+            )
+        }
+
         if (message.isBot) {
             Box(
                 modifier = Modifier
@@ -721,14 +844,18 @@ fun MessageBubble(
             val bodyText = payload?.caption ?: payload?.text ?: message.text
 
             Surface(
-                modifier = Modifier.widthIn(max = 345.dp),
+                modifier = Modifier.widthIn(max = 335.dp),
                 shape = bubbleShape,
                 color = MaterialTheme.colorScheme.surface,
                 tonalElevation = 3.dp,
                 shadowElevation = 2.dp,
                 border = BorderStroke(
-                    1.dp,
-                    MaterialTheme.colorScheme.primary.copy(alpha = 0.22f)
+                    width = if (isSelected) 2.dp else 1.dp,
+                    color = if (isSelected) {
+                        activePalette.previewPrimary
+                    } else {
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.22f)
+                    }
                 )
             ) {
                 Column(
@@ -739,7 +866,7 @@ fun MessageBubble(
                         bottom = 8.dp
                     )
                 ) {
-                    // Header Row: Bot Name + Copy Button
+                    // Header Row: Bot Name
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -751,21 +878,6 @@ fun MessageBubble(
                             color = MaterialTheme.colorScheme.primary,
                             fontWeight = FontWeight.Bold
                         )
-
-                        IconButton(
-                            onClick = {
-                                clipboardManager.setText(AnnotatedString(bodyText))
-                                onCopied("Teks pesan disalin ke clipboard")
-                            },
-                            modifier = Modifier.size(28.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Filled.ContentCopy,
-                                contentDescription = "Salin pesan",
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(15.dp)
-                            )
-                        }
                     }
 
                     // Quoted Message Preview (mirip Baileys options: { quoted: msg })
@@ -805,9 +917,10 @@ fun MessageBubble(
                         InlineVideoPlayer(
                             videoUrl = payload.video.url,
                             thumbnailUrl = payload.video.thumbnailUrl,
+                            fileName = payload.video.fileName,
                             badgeLabel = "🎬 VIDEO HD",
-                            onDownloadClick = { url, label ->
-                                enqueueFileDownload(context, url, label, onCopied)
+                            onDownloadClick = { url, label, fn ->
+                                enqueueFileDownload(context, url, label, fn, onCopied)
                             }
                         )
                     }
@@ -817,8 +930,8 @@ fun MessageBubble(
                         Spacer(modifier = Modifier.height(8.dp))
                         SingleImageViewer(
                             image = payload.image,
-                            onDownloadClick = { url, label ->
-                                enqueueFileDownload(context, url, label, onCopied)
+                            onDownloadClick = { url, label, fn ->
+                                enqueueFileDownload(context, url, label, fn, onCopied)
                             }
                         )
                     }
@@ -829,8 +942,8 @@ fun MessageBubble(
                         TikTokCarouselViewer(
                             slides = payload?.carousel.orEmpty(),
                             accentColor = activePalette.previewPrimary,
-                            onDownloadClick = { url, label ->
-                                enqueueFileDownload(context, url, label, onCopied)
+                            onDownloadClick = { url, label, fn ->
+                                enqueueFileDownload(context, url, label, fn, onCopied)
                             }
                         )
                     }
@@ -884,6 +997,7 @@ fun MessageBubble(
                                                 context = context,
                                                 url = btn.url.orEmpty(),
                                                 label = btnLabel,
+                                                customFileName = btn.fileName,
                                                 onResult = onCopied
                                             )
                                         },
@@ -914,6 +1028,7 @@ fun MessageBubble(
                                                     context = context,
                                                     url = btn.url.orEmpty(),
                                                     label = btnLabel,
+                                                    customFileName = btn.fileName,
                                                     onResult = onCopied
                                                 )
                                             } else {

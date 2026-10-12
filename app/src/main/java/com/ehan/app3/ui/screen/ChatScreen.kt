@@ -1,5 +1,6 @@
 package com.ehan.app3.ui.screen
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
@@ -51,10 +52,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import com.ehan.app3.ChatViewModel
+import com.ehan.app3.bot.baileys.BaileysSocket
 import com.ehan.app3.data.UserPreferences
 import com.ehan.app3.models.NetworkMonitor
 import com.ehan.app3.ui.theme.AppPalette
@@ -68,6 +72,7 @@ fun ChatScreen(
     onAccentColorChange: (String) -> Unit = {}
 ) {
     val context = LocalContext.current
+    val clipboardManager = LocalClipboardManager.current
 
     val networkMonitor = remember {
         NetworkMonitor(
@@ -94,6 +99,25 @@ fun ChatScreen(
 
     var showThemeStudio by rememberSaveable {
         mutableStateOf(false)
+    }
+
+    var selectedMessageIds by remember {
+        mutableStateOf(emptySet<Long>())
+    }
+
+    val isSelectionMode = selectedMessageIds.isNotEmpty()
+
+    // Bersihkan ID terpilih yang mungkin sudah tidak ada di daftar messages
+    LaunchedEffect(messages) {
+        if (selectedMessageIds.isNotEmpty()) {
+            val validIds = messages.map { it.id }.toSet()
+            selectedMessageIds = selectedMessageIds.intersect(validIds)
+        }
+    }
+
+    // Tekan tombol Back sistem untuk membatalkan mode pilih ala WhatsApp
+    BackHandler(enabled = isSelectionMode) {
+        selectedMessageIds = emptySet()
     }
 
     val listState = rememberLazyListState()
@@ -127,7 +151,36 @@ fun ChatScreen(
                 isOnline = isOnline,
                 currentThemeMode = userPreferences.themeMode,
                 currentAccentColor = userPreferences.accentColor,
-                showThemeStudio = showThemeStudio,
+                showThemeStudio = showThemeStudio && !isSelectionMode,
+                selectedCount = selectedMessageIds.size,
+                onCancelSelection = {
+                    selectedMessageIds = emptySet()
+                },
+                onCopySelected = {
+                    if (selectedMessageIds.size == 1) {
+                        val selectedId = selectedMessageIds.first()
+                        val msg = messages.find { it.id == selectedId }
+                        if (msg != null) {
+                            val payload = BaileysSocket.parsePayload(msg.payloadJson)
+                            val copyText = payload?.caption ?: payload?.text ?: msg.text
+                            clipboardManager.setText(AnnotatedString(copyText))
+                            selectedMessageIds = emptySet()
+                            scope.launch {
+                                snackbarHostState.showSnackbar("Pesan disalin ke clipboard")
+                            }
+                        }
+                    }
+                },
+                onDeleteSelected = {
+                    val count = selectedMessageIds.size
+                    if (count > 0) {
+                        viewModel.deleteMessages(selectedMessageIds)
+                        selectedMessageIds = emptySet()
+                        scope.launch {
+                            snackbarHostState.showSnackbar("$count pesan dihapus")
+                        }
+                    }
+                },
                 onToggleThemeStudio = { showThemeStudio = !showThemeStudio },
                 onThemeModeChange = { mode ->
                     onThemeModeChange(mode)
@@ -137,6 +190,7 @@ fun ChatScreen(
                 },
                 onClearChat = {
                     viewModel.clearChat()
+                    selectedMessageIds = emptySet()
                     scope.launch {
                         snackbarHostState.showSnackbar("Riwayat percakapan dibersihkan")
                     }
@@ -180,13 +234,13 @@ fun ChatScreen(
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(
-                    start = 14.dp,
-                    end = 14.dp,
+                    start = 10.dp,
+                    end = 10.dp,
                     top = 14.dp,
                     bottom = 16.dp
                 ),
                 state = listState,
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 if (messages.isEmpty() && !isTyping) {
                     item {
@@ -202,16 +256,41 @@ fun ChatScreen(
                         items = messages,
                         key = { it.id }
                     ) { message ->
+                        val isSelected = message.id in selectedMessageIds
                         MessageBubble(
                             message = message,
                             currentAccentColor = userPreferences.accentColor,
+                            isSelectionMode = isSelectionMode,
+                            isSelected = isSelected,
+                            onToggleSelect = {
+                                selectedMessageIds = if (isSelected) {
+                                    selectedMessageIds - message.id
+                                } else {
+                                    selectedMessageIds + message.id
+                                }
+                            },
+                            onLongPressSelect = {
+                                selectedMessageIds = if (isSelected) {
+                                    selectedMessageIds - message.id
+                                } else {
+                                    selectedMessageIds + message.id
+                                }
+                            },
                             onCopied = { snackbarMsg ->
                                 scope.launch {
                                     snackbarHostState.showSnackbar(snackbarMsg)
                                 }
                             },
                             onSendCommand = { commandId ->
-                                viewModel.sendMessage(commandId)
+                                if (isSelectionMode) {
+                                    selectedMessageIds = if (isSelected) {
+                                        selectedMessageIds - message.id
+                                    } else {
+                                        selectedMessageIds + message.id
+                                    }
+                                } else {
+                                    viewModel.sendMessage(commandId)
+                                }
                             }
                         )
                     }
@@ -300,7 +379,6 @@ fun MessageInput(
                 .fillMaxWidth()
                 .padding(start = 12.dp, top = 10.dp, end = 12.dp, bottom = 10.dp)
         ) {
-            // Colorful Quick Command Chips
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -337,7 +415,6 @@ fun MessageInput(
                 }
             }
 
-            // Input Bar Row
             Row(
                 modifier = Modifier
                     .fillMaxWidth()

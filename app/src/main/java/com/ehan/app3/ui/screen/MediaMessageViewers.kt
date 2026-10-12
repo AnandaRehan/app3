@@ -60,8 +60,9 @@ import kotlinx.coroutines.launch
 fun InlineVideoPlayer(
     videoUrl: String,
     thumbnailUrl: String? = null,
+    fileName: String? = null,
     badgeLabel: String = "🎬 VIDEO",
-    onDownloadClick: (String, String) -> Unit,
+    onDownloadClick: (url: String, label: String, fileName: String?) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var isPlaying by remember(videoUrl) { mutableStateOf(false) }
@@ -189,7 +190,10 @@ fun InlineVideoPlayer(
                 }
 
                 IconButton(
-                    onClick = { onDownloadClick(videoUrl, "Video HD") },
+                    onClick = {
+                        val resolvedName = fileName ?: "hd-${System.currentTimeMillis()}.mp4"
+                        onDownloadClick(videoUrl, "Video ($resolvedName)", resolvedName)
+                    },
                     modifier = Modifier.size(34.dp),
                     colors = IconButtonDefaults.iconButtonColors(
                         containerColor = Color.Black.copy(alpha = 0.65f),
@@ -278,7 +282,7 @@ fun InlineVideoPlayer(
 @Composable
 fun SingleImageViewer(
     image: MediaSource,
-    onDownloadClick: (String, String) -> Unit,
+    onDownloadClick: (url: String, label: String, fileName: String?) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Box(
@@ -316,7 +320,10 @@ fun SingleImageViewer(
             }
 
             IconButton(
-                onClick = { onDownloadClick(image.url, "Foto HD") },
+                onClick = {
+                    val resolvedName = image.fileName ?: "img-${System.currentTimeMillis()}.jpg"
+                    onDownloadClick(image.url, "Foto ($resolvedName)", resolvedName)
+                },
                 modifier = Modifier.size(34.dp),
                 colors = IconButtonDefaults.iconButtonColors(
                     containerColor = Color.Black.copy(alpha = 0.65f),
@@ -341,7 +348,7 @@ fun SingleImageViewer(
 fun TikTokCarouselViewer(
     slides: List<SlideMediaItem>,
     accentColor: Color,
-    onDownloadClick: (String, String) -> Unit,
+    onDownloadClick: (url: String, label: String, fileName: String?) -> Unit,
     modifier: Modifier = Modifier
 ) {
     if (slides.isEmpty()) return
@@ -372,17 +379,24 @@ fun TikTokCarouselViewer(
 
                 Box(modifier = Modifier.fillMaxSize()) {
                     if (showLiveVideo && !item.videoUrl.isNullOrBlank()) {
+                        val vidFileName = item.videoFileName
+                            ?: item.fileName
+                            ?: "hd-${System.currentTimeMillis()}-slide${page + 1}.mp4"
                         InlineVideoPlayer(
                             videoUrl = item.videoUrl,
                             thumbnailUrl = item.imageUrl,
+                            fileName = vidFileName,
                             badgeLabel = "🎞️ LIVE SLIDE ${page + 1}/${slides.size}",
-                            onDownloadClick = { url, _ ->
-                                onDownloadClick(url, "Live Slide #${page + 1} (MP4)")
+                            onDownloadClick = { url, label, fn ->
+                                onDownloadClick(url, label, fn)
                             },
                             modifier = Modifier.fillMaxSize()
                         )
                     } else {
                         val photoUrl = item.imageUrl ?: item.url
+                        val imgFileName = item.imageFileName
+                            ?: item.fileName
+                            ?: "img-${System.currentTimeMillis()}-slide${page + 1}.jpg"
                         AsyncImage(
                             model = photoUrl,
                             contentDescription = item.title ?: "Slide ${page + 1}",
@@ -413,7 +427,7 @@ fun TikTokCarouselViewer(
 
                             IconButton(
                                 onClick = {
-                                    onDownloadClick(photoUrl, "Foto Slide #${page + 1}")
+                                    onDownloadClick(photoUrl, "Foto Slide #${page + 1}", imgFileName)
                                 },
                                 modifier = Modifier.size(34.dp),
                                 colors = IconButtonDefaults.iconButtonColors(
@@ -550,6 +564,11 @@ fun TikTokCarouselViewer(
             }
 
             val currentSlide = slides[pagerState.currentPage]
+            val currentFileName = currentSlide.fileName ?: if (currentSlide.type == SlideMediaType.VIDEO) {
+                "hd-${System.currentTimeMillis()}-slide${pagerState.currentPage + 1}.mp4"
+            } else {
+                "img-${System.currentTimeMillis()}-slide${pagerState.currentPage + 1}.jpg"
+            }
             val currentLabel = if (currentSlide.type == SlideMediaType.VIDEO) {
                 "⬇️ Slide #${pagerState.currentPage + 1} (Video)"
             } else {
@@ -560,7 +579,7 @@ fun TikTokCarouselViewer(
                 modifier = Modifier
                     .clip(RoundedCornerShape(50))
                     .clickable {
-                        onDownloadClick(currentSlide.url, currentLabel)
+                        onDownloadClick(currentSlide.url, currentLabel, currentFileName)
                     },
                 shape = RoundedCornerShape(50),
                 color = accentColor.copy(alpha = 0.14f)

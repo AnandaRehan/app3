@@ -91,6 +91,19 @@ class ChatViewModel(
         _errorMessage.value = null
     }
 
+    fun deleteMessages(messageIds: Set<Long>) {
+        if (messageIds.isEmpty()) return
+
+        viewModelScope.launch {
+            try {
+                repository.deleteMessages(messageIds.toList())
+            } catch (exception: Exception) {
+                _errorMessage.value =
+                    "Gagal menghapus pesan terpilih."
+            }
+        }
+    }
+
     fun clearChat() {
 
         viewModelScope.launch {

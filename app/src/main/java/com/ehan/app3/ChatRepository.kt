@@ -79,6 +79,12 @@ class ChatRepository(
         return true
     }
 
+    suspend fun deleteMessages(messageIds: List<Long>) {
+        if (messageIds.isNotEmpty()) {
+            chatDao.deleteMessagesByIds(messageIds)
+        }
+    }
+
     suspend fun clearMessages() {
         chatDao.deleteAllMessages()
     }

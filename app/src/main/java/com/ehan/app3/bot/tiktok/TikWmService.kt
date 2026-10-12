@@ -37,9 +37,9 @@ class TikWmService {
     /**
      * Mengambil data TikTok dari API dan langsung mengirimkannya via `sock.sendMessage`
      * ala @WhiskeySockets/baileys:
-     * - Jika Video -> kirim pesan Video + Caption (Kreator, Region, Durasi, Dibuat, Caption)
-     * - Jika 1 Foto -> kirim pesan Foto (Image) + Caption
-     * - Jika Slide (banyak foto atau gabungan foto + live_images video) -> kirim Carousel Slide menyatu + Caption
+     * - Nama file Video: ("hd" atau "sd") + "-" + (data.id ?: data.aweme_id ?: timestamp) + ".mp4"
+     * - Nama file Audio: (data.music_info.id ?: timestamp) + ".mp3"
+     * - Nama file Gambar/Slide: "img-" + baseId + (-slideN) + ".jpg"
      */
     suspend fun sendTikTokMessage(
         sock: BaileysSocket,
@@ -117,6 +117,11 @@ class TikWmService {
 
             val data = hasil.data
             val captionText = buildTikTokCaption(data)
+
+            // ID utama untuk penamaan file: data.id -> data.aweme_id -> System.currentTimeMillis() (Date.now())
+            val baseMediaId = resolveMediaId(data)
+            val audioFileName = resolveAudioFileName(data)
+
             val musicUrl = data.music?.takeIf { it.isNotBlank() }
                 ?: data.musicInfo?.play?.takeIf { it.isNotBlank() }
 
@@ -128,22 +133,25 @@ class TikWmService {
                 // Kasus 1: Hanya 1 Foto dan bukan Live Video -> Kirim Foto tunggal (image)
                 images.size == 1 && !hasAnyLiveVideo -> {
                     val photoUrl = images.first()
+                    val singlePhotoFileName = "img-$baseMediaId.jpg"
                     val buttons = buildList {
                         add(
                             BotButton(
                                 buttonId = "dl_photo_1",
-                                buttonText = ButtonText("⬇️ Unduh Foto HD"),
+                                buttonText = ButtonText("⬇️ Unduh Foto ($singlePhotoFileName)"),
                                 type = BotButton.TYPE_URL_DOWNLOAD,
-                                url = photoUrl
+                                url = photoUrl,
+                                fileName = singlePhotoFileName
                             )
                         )
                         if (!musicUrl.isNullOrBlank()) {
                             add(
                                 BotButton(
                                     buttonId = "dl_audio",
-                                    buttonText = ButtonText("🎵 Unduh Audio MP3"),
+                                    buttonText = ButtonText("🎵 Unduh Audio ($audioFileName)"),
                                     type = BotButton.TYPE_URL_DOWNLOAD,
-                                    url = musicUrl
+                                    url = musicUrl,
+                                    fileName = audioFileName
                                 )
                             )
                         }
@@ -155,9 +163,16 @@ class TikWmService {
                             image = MediaSource(
                                 url = photoUrl,
                                 thumbnailUrl = data.cover ?: photoUrl,
-                                mimeType = "image/jpeg"
+                                mimeType = "image/jpeg",
+                                fileName = singlePhotoFileName
                             ),
-                            audio = musicUrl?.let { MediaSource(url = it, mimeType = "audio/mpeg") },
+                            audio = musicUrl?.let {
+                                MediaSource(
+                                    url = it,
+                                    mimeType = "audio/mpeg",
+                                    fileName = audioFileName
+                                )
+                            },
                             caption = captionText,
                             footer = "📸 TikTok Photo • sock.sendMessage",
                             buttons = buttons
@@ -170,8 +185,12 @@ class TikWmService {
                 images.isNotEmpty() || hasAnyLiveVideo -> {
                     val totalSlides = max(images.size, liveImages.size)
                     val slideItems = (0 until totalSlides).mapNotNull { index ->
+                        val slideNo = index + 1
                         val imgUrl = images.getOrNull(index)?.takeIf { it.isNotBlank() }
                         val liveVidUrl = liveImages.getOrNull(index)?.takeIf { it.isNotBlank() }
+
+                        val imgFileName = "img-$baseMediaId-slide$slideNo.jpg"
+                        val vidFileName = "hd-$baseMediaId-slide$slideNo.mp4"
 
                         when {
                             liveVidUrl != null -> SlideMediaItem(
@@ -179,14 +198,20 @@ class TikWmService {
                                 url = liveVidUrl,
                                 imageUrl = imgUrl ?: data.cover,
                                 videoUrl = liveVidUrl,
-                                title = "Slide ${index + 1}/$totalSlides • Live Video"
+                                title = "Slide $slideNo/$totalSlides • Live Video",
+                                fileName = vidFileName,
+                                imageFileName = imgFileName,
+                                videoFileName = vidFileName
                             )
                             imgUrl != null -> SlideMediaItem(
                                 type = SlideMediaType.IMAGE,
                                 url = imgUrl,
                                 imageUrl = imgUrl,
                                 videoUrl = null,
-                                title = "Slide ${index + 1}/$totalSlides • Foto"
+                                title = "Slide $slideNo/$totalSlides • Foto",
+                                fileName = imgFileName,
+                                imageFileName = imgFileName,
+                                videoFileName = null
                             )
                             else -> null
                         }
@@ -197,9 +222,10 @@ class TikWmService {
                             add(
                                 BotButton(
                                     buttonId = "dl_audio",
-                                    buttonText = ButtonText("🎵 Unduh Audio MP3"),
+                                    buttonText = ButtonText("🎵 Unduh Audio ($audioFileName)"),
                                     type = BotButton.TYPE_URL_DOWNLOAD,
-                                    url = musicUrl
+                                    url = musicUrl,
+                                    fileName = audioFileName
                                 )
                             )
                         }
@@ -216,7 +242,13 @@ class TikWmService {
                         jid = jid,
                         content = BotMessageContent(
                             carousel = slideItems,
-                            audio = musicUrl?.let { MediaSource(url = it, mimeType = "audio/mpeg") },
+                            audio = musicUrl?.let {
+                                MediaSource(
+                                    url = it,
+                                    mimeType = "audio/mpeg",
+                                    fileName = audioFileName
+                                )
+                            },
                             caption = captionText,
                             footer = "🖼️ Geser untuk lihat semua slide (${slideItems.size} media foto/video)",
                             buttons = buttons
@@ -225,30 +257,52 @@ class TikWmService {
                     )
                 }
 
-                // Kasus 3: Video TikTok -> Kirim Video + Caption sesuai format yang diminta
+                // Kasus 3: Video TikTok -> Kirim Video + Caption dengan nama file hd-<id>.mp4 dan sd-<id>.mp4
                 else -> {
-                    val videoUrl = data.hdplay?.takeIf { it.isNotBlank() }
-                        ?: data.play?.takeIf { it.isNotBlank() }
-                        ?: data.wmplay.orEmpty()
+                    val hdUrl = data.hdplay?.takeIf { it.isNotBlank() }
+                    val sdUrl = data.play?.takeIf { it.isNotBlank() } ?: data.wmplay?.takeIf { it.isNotBlank() }
+
+                    val primaryVideoUrl = hdUrl ?: sdUrl.orEmpty()
+                    val isPrimaryHd = hdUrl != null
+                    val primaryVideoFileName = if (isPrimaryHd) {
+                        "hd-$baseMediaId.mp4"
+                    } else {
+                        "sd-$baseMediaId.mp4"
+                    }
+
+                    val hdFileName = "hd-$baseMediaId.mp4"
+                    val sdFileName = "sd-$baseMediaId.mp4"
 
                     val buttons = buildList {
-                        if (videoUrl.isNotBlank()) {
+                        if (hdUrl != null) {
                             add(
                                 BotButton(
                                     buttonId = "dl_video_hd",
-                                    buttonText = ButtonText("⬇️ Unduh Video HD"),
+                                    buttonText = ButtonText("⬇️ Unduh Video HD ($hdFileName)"),
                                     type = BotButton.TYPE_URL_DOWNLOAD,
-                                    url = videoUrl
+                                    url = hdUrl,
+                                    fileName = hdFileName
                                 )
                             )
                         }
-                        if (!data.play.isNullOrBlank() && data.play != videoUrl) {
+                        if (sdUrl != null && sdUrl != hdUrl) {
                             add(
                                 BotButton(
                                     buttonId = "dl_video_sd",
-                                    buttonText = ButtonText("⬇️ Video SD (No WM)"),
+                                    buttonText = ButtonText("⬇️ Unduh Video SD ($sdFileName)"),
                                     type = BotButton.TYPE_URL_DOWNLOAD,
-                                    url = data.play
+                                    url = sdUrl,
+                                    fileName = sdFileName
+                                )
+                            )
+                        } else if (hdUrl == null && sdUrl != null) {
+                            add(
+                                BotButton(
+                                    buttonId = "dl_video_sd",
+                                    buttonText = ButtonText("⬇️ Unduh Video SD ($sdFileName)"),
+                                    type = BotButton.TYPE_URL_DOWNLOAD,
+                                    url = sdUrl,
+                                    fileName = sdFileName
                                 )
                             )
                         }
@@ -256,9 +310,10 @@ class TikWmService {
                             add(
                                 BotButton(
                                     buttonId = "dl_audio",
-                                    buttonText = ButtonText("🎵 Unduh Audio MP3"),
+                                    buttonText = ButtonText("🎵 Unduh Audio ($audioFileName)"),
                                     type = BotButton.TYPE_URL_DOWNLOAD,
-                                    url = musicUrl
+                                    url = musicUrl,
+                                    fileName = audioFileName
                                 )
                             )
                         }
@@ -268,13 +323,20 @@ class TikWmService {
                         jid = jid,
                         content = BotMessageContent(
                             video = MediaSource(
-                                url = videoUrl,
+                                url = primaryVideoUrl,
                                 thumbnailUrl = data.cover ?: data.originCover,
-                                mimeType = "video/mp4"
+                                mimeType = "video/mp4",
+                                fileName = primaryVideoFileName
                             ),
-                            audio = musicUrl?.let { MediaSource(url = it, mimeType = "audio/mpeg") },
+                            audio = musicUrl?.let {
+                                MediaSource(
+                                    url = it,
+                                    mimeType = "audio/mpeg",
+                                    fileName = audioFileName
+                                )
+                            },
                             caption = captionText,
-                            footer = "🎬 TikTok Video HD • sock.sendMessage",
+                            footer = "🎬 TikTok Video • sock.sendMessage",
                             buttons = buttons
                         ),
                         options = options
@@ -343,6 +405,24 @@ class TikWmService {
         private var inMemoryKey: String? = null
 
         private val URL_REGEX = Regex("""https?://[^\s]+""")
+
+        /**
+         * Resolusi ID media: data.id -> data.aweme_id -> System.currentTimeMillis()
+         */
+        fun resolveMediaId(data: TikWmData): String {
+            return data.id?.trim()?.takeIf { it.isNotEmpty() }
+                ?: data.awemeId?.trim()?.takeIf { it.isNotEmpty() }
+                ?: System.currentTimeMillis().toString()
+        }
+
+        /**
+         * Resolusi nama file audio: (data.music_info.id ?: System.currentTimeMillis()) + ".mp3"
+         */
+        fun resolveAudioFileName(data: TikWmData): String {
+            val musicId = data.musicInfo?.id?.trim()?.takeIf { it.isNotEmpty() }
+                ?: System.currentTimeMillis().toString()
+            return "$musicId.mp3"
+        }
 
         /**
          * Contoh output: "Rabu, 21 Januari  pukul 23.34.42"

@@ -3,8 +3,8 @@ package com.ehan.app3.bot.baileys
 import com.ehan.app3.data.ChatMessage
 
 /**
- * Representasi sumber media (URL / Thumbnail / MimeType)
- * mirip konfigurasi media di @WhiskeySockets/baileys: { url: "..." }
+ * Representasi sumber media (URL / Thumbnail / MimeType / FileName)
+ * mirip konfigurasi media di @WhiskeySockets/baileys: { url: "...", fileName: "..." }
  */
 data class MediaSource(
     val url: String,
@@ -26,7 +26,10 @@ data class SlideMediaItem(
     val url: String,
     val imageUrl: String? = null,
     val videoUrl: String? = null,
-    val title: String? = null
+    val title: String? = null,
+    val fileName: String? = null,
+    val imageFileName: String? = null,
+    val videoFileName: String? = null
 )
 
 /**
@@ -42,14 +45,16 @@ data class ButtonText(
  *   buttonId: "/menu",
  *   buttonText: { displayText: "Menu Utama" },
  *   type: 1, // 1 = Quick Reply Command, 2 = URL / Download Media
- *   url: "https://..."
+ *   url: "https://...",
+ *   fileName: "hd-7688592181992541458.mp4"
  * }
  */
 data class BotButton(
     val buttonId: String,
     val buttonText: ButtonText,
     val type: Int = 1,
-    val url: String? = null
+    val url: String? = null,
+    val fileName: String? = null
 ) {
     companion object {
         const val TYPE_REPLY = 1
@@ -59,12 +64,7 @@ data class BotButton(
 
 /**
  * Payload utama untuk sock.sendMessage(jid, content, options)
- * Mirip AnyMessageContent di @WhiskeySockets/baileys:
- * - Kirim teks saja: BotMessageContent(text = "Halo!")
- * - Kirim video + caption: BotMessageContent(video = MediaSource(url), caption = "...")
- * - Kirim foto tunggal + caption: BotMessageContent(image = MediaSource(url), caption = "...")
- * - Kirim slide gabungan foto & video: BotMessageContent(carousel = listOf(...), caption = "...")
- * - Kirim tombol interaktif: BotMessageContent(text = "...", footer = "...", buttons = listOf(...))
+ * Mirip AnyMessageContent di @WhiskeySockets/baileys
  */
 data class BotMessageContent(
     val text: String? = null,

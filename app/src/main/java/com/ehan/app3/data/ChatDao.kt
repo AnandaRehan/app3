@@ -62,6 +62,11 @@ interface ChatDao {
         messageId: Long
     )
 
+    @Query("DELETE FROM messages WHERE id IN (:messageIds)")
+    suspend fun deleteMessagesByIds(
+        messageIds: List<Long>
+    )
+
     @Query("DELETE FROM messages")
     suspend fun deleteAllMessages()
 }
