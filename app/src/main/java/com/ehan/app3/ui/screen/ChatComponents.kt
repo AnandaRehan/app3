@@ -111,6 +111,13 @@ val QuickCommandList = listOf(
         badgeColor = Color(0xFFE11D48)
     ),
     QuickCommandItem(
+        command = "/yt",
+        label = "YouTube 720p",
+        description = "Unduh video MP4 & Audio MP3",
+        icon = Icons.Filled.VideoFile,
+        badgeColor = Color(0xFFDC2626)
+    ),
+    QuickCommandItem(
         command = "/menu",
         label = "Menu Utama",
         description = "Daftar fitur populer bot",

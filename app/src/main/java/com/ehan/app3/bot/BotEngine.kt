@@ -7,14 +7,16 @@ import com.ehan.app3.bot.baileys.ButtonText
 import com.ehan.app3.bot.baileys.SendMessageOptions
 import com.ehan.app3.bot.command.CommandManager
 import com.ehan.app3.bot.tiktok.TikWmService
+import com.ehan.app3.bot.youtube.NazeYoutubeService
 import com.ehan.app3.data.ChatMessage
 
 class BotEngine {
 
     private val tikWmService = TikWmService()
+    private val youtubeService = NazeYoutubeService()
 
     private val commandManager =
-        CommandManager(tikWmService)
+        CommandManager(tikWmService, youtubeService)
 
     /**
      * Handler utama dengan arsitektur @WhiskeySockets/baileys (`sock.sendMessage`).
@@ -44,6 +46,14 @@ class BotEngine {
                     options = options
                 )
             }
+            NazeYoutubeService.containsYouTubeUrl(input) -> {
+                youtubeService.sendYouTubeVideoMessage(
+                    sock = sock,
+                    jid = jid,
+                    rawUrl = input,
+                    options = options
+                )
+            }
             else -> {
                 val replyText = when (input.lowercase()) {
                     "halo",
@@ -53,10 +63,10 @@ class BotEngine {
                     "pagi",
                     "siang",
                     "malam" ->
-                        "Halo! 👋 Ketik /menu untuk melihat fitur bot, atau tempel langsung link TikTok untuk download Video HD / Slide Foto."
+                        "Halo! 👋 Ketik /menu untuk melihat fitur bot, atau tempel langsung link TikTok / YouTube untuk download otomatis."
 
                     else ->
-                        "Saya belum mengerti pesan itu.\n\nKetik /menu untuk melihat fitur, atau kirim link TikTok untuk download otomatis."
+                        "Saya belum mengerti pesan itu.\n\nKetik /menu untuk melihat fitur, atau kirim link TikTok / YouTube untuk download otomatis."
                 }
 
                 sock.sendMessage(
@@ -73,6 +83,11 @@ class BotEngine {
                             BotButton(
                                 buttonId = "/tiktok",
                                 buttonText = ButtonText("🎬 TikTok HD"),
+                                type = BotButton.TYPE_REPLY
+                            ),
+                            BotButton(
+                                buttonId = "/yt",
+                                buttonText = ButtonText("▶️ YouTube 720p"),
                                 type = BotButton.TYPE_REPLY
                             )
                         )

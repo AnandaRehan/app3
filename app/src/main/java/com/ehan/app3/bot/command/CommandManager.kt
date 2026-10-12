@@ -19,11 +19,14 @@ import com.ehan.app3.bot.command.commands.StatusCommand
 import com.ehan.app3.bot.command.commands.StyleCommand
 import com.ehan.app3.bot.command.commands.TikTokCommand
 import com.ehan.app3.bot.command.commands.ToolsCommand
+import com.ehan.app3.bot.command.commands.YouTubeCommand
 import com.ehan.app3.bot.tiktok.TikWmService
+import com.ehan.app3.bot.youtube.NazeYoutubeService
 import com.ehan.app3.data.ChatMessage
 
 class CommandManager(
-    private val tikWmService: TikWmService = TikWmService()
+    private val tikWmService: TikWmService = TikWmService(),
+    private val youtubeService: NazeYoutubeService = NazeYoutubeService()
 ) {
 
     private val aiProviderManager =
@@ -38,7 +41,9 @@ class CommandManager(
         val basicCommands =
             listOf<BotCommand>(
                 TikTokCommand(tikWmService),
-                DownloadCommand(tikWmService),
+                YouTubeCommand(youtubeService, audioOnlyDefault = false),
+                YouTubeCommand(youtubeService, audioOnlyDefault = true),
+                DownloadCommand(tikWmService, youtubeService),
                 ToolsCommand(),
                 StyleCommand(),
                 AiCommand(aiProviderManager),
@@ -68,22 +73,43 @@ class CommandManager(
         val content = cleanInput.removePrefix("/")
         val parts = content.split(limit = 2, delimiters = arrayOf(" "))
         val rawCommandName = parts[0].lowercase()
+        val rawArgument = parts.getOrNull(1)?.trim()
+
+        if (rawCommandName == "apikey" || rawCommandName == "setkey") {
+            val subParts = rawArgument?.split(limit = 2, delimiters = arrayOf(" ")).orEmpty()
+            val firstToken = subParts.getOrNull(0)?.lowercase().orEmpty()
+            val restToken = subParts.getOrNull(1)?.trim().orEmpty()
+
+            return when (firstToken) {
+                "yt", "youtube", "naze" -> {
+                    val arg = if (restToken.isEmpty()) null else "key $restToken"
+                    commandMap["youtube"] to arg
+                }
+                "tiktok", "tt", "tikwm" -> {
+                    val arg = if (restToken.isEmpty()) null else "key $restToken"
+                    commandMap["tiktok"] to arg
+                }
+                else -> {
+                    val arg = if (rawArgument.isNullOrBlank()) null else "key $rawArgument"
+                    commandMap["tiktok"] to arg
+                }
+            }
+        }
+
+        if (rawCommandName == "naze") {
+            val arg = if (rawArgument.isNullOrBlank()) null else "key $rawArgument"
+            return commandMap["youtube"] to arg
+        }
 
         val commandName = when (rawCommandName) {
             "tt", "tikwm" -> "tiktok"
+            "yt", "ytmp4" -> "youtube"
+            "ytaudio" -> "ytmp3"
             "dl" -> "download"
-            "apikey", "setkey" -> "tiktok"
             else -> rawCommandName
         }
 
-        val rawArgument = parts.getOrNull(1)?.trim()
-        val argument = if (rawCommandName == "apikey" || rawCommandName == "setkey") {
-            if (rawArgument.isNullOrBlank()) null else "key $rawArgument"
-        } else {
-            rawArgument
-        }
-
-        return commandMap[commandName] to argument
+        return commandMap[commandName] to rawArgument
     }
 
     suspend fun execute(input: String): String {
