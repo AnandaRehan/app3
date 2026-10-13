@@ -1,6 +1,6 @@
 {
-  "summary": "Pembaruan rencana implementasi fitur Floating Pop-up Downloader melayang: untuk unduhan otomatis TikTok dari pop-up, prioritas diatur ke video biasa tanpa watermark (SD No-Watermark via data.play) bukan versi HD agar proses unduhan lebih cepat dan hemat kuota, dengan tetap mempertahankan penamaan berkas sd-<id>.",
-  "updatedAt": "2026-10-13T10:35:29.767037441Z",
+  "summary": "Pembaruan rencana perbaikan deteksi papan klip (clipboard) pada Floating Pop-up Downloader: Mengatasi pembatasan privasi Android 10+ (background clipboard access) menggunakan Translucent Trampoline Activity (ClipboardCaptureActivity) yang membaca papan klip dengan fokus jendela instan tanpa kedip atau perpindahan layar, serta menambahkan opsi fallback Tempel Tautan di menu pop-up.",
+  "updatedAt": "2026-10-13T11:03:08.763543377Z",
   "requestFeedback": true,
   "userFacing": true
 }

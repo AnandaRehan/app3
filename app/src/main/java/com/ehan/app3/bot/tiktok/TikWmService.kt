@@ -512,18 +512,31 @@ class TikWmService {
         }
 
         fun extractTikTokUrl(input: String): String? {
-            val match = URL_REGEX.find(input)?.value ?: return null
-            val lower = match.lowercase()
-            return if (
-                lower.contains("tiktok.com") ||
-                lower.contains("tt.site") ||
-                lower.contains("tiktokv.com") ||
-                lower.contains("douyin.com")
-            ) {
-                match
-            } else {
-                null
+            if (input.isBlank()) return null
+            val matches = URL_REGEX.findAll(input)
+            for (m in matches) {
+                val cleanUrl = m.value.trim().trimEnd('.', ',', ')', ']', '}', '"', '\'', ';', ':')
+                val lower = cleanUrl.lowercase()
+                if (
+                    lower.contains("tiktok.com") ||
+                    lower.contains("tt.site") ||
+                    lower.contains("tiktokv.com") ||
+                    lower.contains("douyin.com")
+                ) {
+                    return cleanUrl
+                }
             }
+            // Dukung jika pengguna menyalin link tanpa awalan https://
+            val fallbackRegex = Regex("""(?i)\b(?:www\.|vt\.|vm\.|v\.)?(?:tiktok\.com|tt\.site|tiktokv\.com|douyin\.com)/[^\s]+""")
+            val fallbackMatch = fallbackRegex.find(input)?.value?.trim()?.trimEnd('.', ',', ')', ']', '}', '"', '\'', ';', ':')
+            if (fallbackMatch != null) {
+                return if (fallbackMatch.startsWith("http://") || fallbackMatch.startsWith("https://")) {
+                    fallbackMatch
+                } else {
+                    "https://$fallbackMatch"
+                }
+            }
+            return null
         }
 
         fun containsTikTokUrl(input: String): Boolean {

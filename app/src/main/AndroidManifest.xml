@@ -41,6 +41,16 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".service.ClipboardCaptureActivity"
+            android:theme="@style/Theme.App3.Transparent"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:finishOnTaskLaunch="true"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
+            android:windowSoftInputMode="stateAlwaysHidden" />
+
         <service
             android:name=".service.FloatingDownloaderService"
             android:enabled="true"

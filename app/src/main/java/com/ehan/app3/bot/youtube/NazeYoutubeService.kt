@@ -432,13 +432,25 @@ class NazeYoutubeService {
         }
 
         fun extractYouTubeUrl(input: String): String? {
-            val match = URL_REGEX.find(input)?.value ?: return null
-            val lower = match.lowercase()
-            return if (lower.contains("youtube.com") || lower.contains("youtu.be")) {
-                match
-            } else {
-                null
+            if (input.isBlank()) return null
+            val matches = URL_REGEX.findAll(input)
+            for (m in matches) {
+                val clean = m.value.trim().trimEnd('.', ',', ')', ']', '}', '"', '\'', ';', ':')
+                val lower = clean.lowercase()
+                if (lower.contains("youtube.com") || lower.contains("youtu.be")) {
+                    return clean
+                }
             }
+            val fallbackRegex = Regex("""(?i)\b(?:www\.|m\.)?(?:youtube\.com|youtu\.be)/[^\s]+""")
+            val fallbackMatch = fallbackRegex.find(input)?.value?.trim()?.trimEnd('.', ',', ')', ']', '}', '"', '\'', ';', ':')
+            if (fallbackMatch != null) {
+                return if (fallbackMatch.startsWith("http://") || fallbackMatch.startsWith("https://")) {
+                    fallbackMatch
+                } else {
+                    "https://$fallbackMatch"
+                }
+            }
+            return null
         }
 
         fun extractYouTubeVideoId(url: String): String? {

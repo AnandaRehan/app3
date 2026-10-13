@@ -57,8 +57,10 @@ class FloatingBubbleView(
             textSize = 11f
             setTextColor(Color.WHITE)
             setTypeface(null, Typeface.BOLD)
-            val padH = (10 * density).toInt()
-            val padV = (5 * density).toInt()
+            maxLines = 2
+            ellipsize = android.text.TextUtils.TruncateAt.END
+            val padH = (12 * density).toInt()
+            val padV = (6 * density).toInt()
             setPadding(padH, padV, padH, padV)
             val pillBg = GradientDrawable().apply {
                 shape = GradientDrawable.RECTANGLE

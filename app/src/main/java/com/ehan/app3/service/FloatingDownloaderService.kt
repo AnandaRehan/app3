@@ -72,6 +72,7 @@ class FloatingDownloaderService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        instance = this
         _isServiceRunning.value = true
 
         if (!canDrawOverlays(this)) {
@@ -84,6 +85,7 @@ class FloatingDownloaderService : Service() {
 
         startForegroundServiceNotification()
         setupOverlayViews()
+        registerClipboardListener()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -91,6 +93,10 @@ class FloatingDownloaderService : Service() {
         when (action) {
             ACTION_DETECT_CLIPBOARD -> {
                 detectAndDownloadFromClipboard()
+            }
+            ACTION_PROCESS_CAPTURED_TEXT -> {
+                val text = intent.getStringExtra(EXTRA_CAPTURED_TEXT)
+                processCapturedClipboardText(text)
             }
             ACTION_STOP_SERVICE -> {
                 stopSelf()
@@ -340,34 +346,99 @@ class FloatingDownloaderService : Service() {
         }
     }
 
+    private var clipboardListener: ClipboardManager.OnPrimaryClipChangedListener? = null
+    private var lastKnownClipboardText: String? = null
+
+    private fun registerClipboardListener() {
+        try {
+            val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+            clipboardListener = ClipboardManager.OnPrimaryClipChangedListener {
+                // Saat ada perubahan clip, simpan jika bisa diakses
+                val text = getClipboardText()
+                if (!text.isNullOrBlank()) {
+                    lastKnownClipboardText = text
+                }
+            }
+            clipboard?.addPrimaryClipChangedListener(clipboardListener)
+        } catch (_: Exception) {
+        }
+    }
+
+    private fun unregisterClipboardListener() {
+        try {
+            clipboardListener?.let {
+                val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+                clipboard?.removePrimaryClipChangedListener(it)
+            }
+        } catch (_: Exception) {
+        }
+    }
+
     /**
-     * Membaca teks terakhir dari papan klip (ClipboardManager)
-     * dan mengeksekusi pengunduhan otomatis di latar belakang.
+     * Membaca teks terakhir dari papan klip.
+     * Pada Android 10+ (API 29+), jika pembacaan latar belakang dibatasi,
+     * sistem akan meluncurkan ClipboardCaptureActivity transparan sekejap
+     * untuk memperoleh window focus dan membaca clipboard secara legal.
      */
     fun detectAndDownloadFromClipboard() {
         floatingBubbleView.setLoading(true)
-        floatingBubbleView.showStatusMessage("Mencari link di papan klip...", isError = false, durationMs = 2500)
+        floatingBubbleView.showStatusMessage("Mendeteksi papan klip...", isError = false, durationMs = 2500)
 
+        // Cek apakah ada teks langsung yang bisa dibaca (misal di Android 9 atau jika app aktif)
+        val directText = getClipboardText()
+        if (!directText.isNullOrBlank()) {
+            lastKnownClipboardText = directText
+            processCapturedClipboardText(directText)
+            return
+        }
+
+        // Jika directText kosong tetapi ada lastKnownClipboardText yang baru saja disalin
+        if (!lastKnownClipboardText.isNullOrBlank()) {
+            val cached = lastKnownClipboardText
+            lastKnownClipboardText = null
+            processCapturedClipboardText(cached)
+            return
+        }
+
+        // Luncurkan ClipboardCaptureActivity (Translucent Trampoline) tanpa animasi
+        try {
+            ClipboardCaptureActivity.capture(this)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            // Fallback jika peluncuran activity gagal
+            processCapturedClipboardText(null)
+        }
+    }
+
+    /**
+     * Memproses teks papan klip yang telah berhasil ditangkap (baik dari direct read maupun ClipboardCaptureActivity).
+     */
+    fun processCapturedClipboardText(clipboardText: String?) {
         serviceScope.launch {
-            // Ambil teks dari papan klip di Main thread
-            val clipboardText = getClipboardText()
+            floatingBubbleView.setLoading(true)
 
             if (clipboardText.isNullOrBlank()) {
                 floatingBubbleView.setLoading(false)
-                floatingBubbleView.showStatusMessage("⚠️ Papan klip kosong!", isError = true)
-                Toast.makeText(this@FloatingDownloaderService, "Papan klip kosong. Salin link TikTok/YouTube dulu!", Toast.LENGTH_SHORT).show()
+                floatingBubbleView.showStatusMessage("⚠️ Papan klip kosong!", isError = true, durationMs = 3000)
+                Toast.makeText(
+                    this@FloatingDownloaderService,
+                    "Papan klip kosong. Silakan salin tautan TikTok atau YouTube terlebih dahulu!",
+                    Toast.LENGTH_SHORT
+                ).show()
                 return@launch
             }
 
-            // Proses link lewat DownloadProcessor
+            floatingBubbleView.showStatusMessage("🔍 Menganalisis tautan...", isError = false, durationMs = 2000)
+
+            // Proses tautan lewat DownloadProcessor (TikTok SD No-Watermark atau YouTube)
             val result = downloadProcessor.processClipboardText(clipboardText)
 
             floatingBubbleView.setLoading(false)
             when (result) {
                 is DownloadDetectionResult.Success -> {
-                    vibrate(30)
+                    vibrate(35)
                     val successMsg = "✅ Mengunduh ${result.platform}: ${result.fileName}"
-                    floatingBubbleView.showStatusMessage(successMsg, isError = false, durationMs = 4000)
+                    floatingBubbleView.showStatusMessage(successMsg, isError = false, durationMs = 4500)
                     Toast.makeText(this@FloatingDownloaderService, successMsg, Toast.LENGTH_LONG).show()
                 }
                 is DownloadDetectionResult.Error -> {
@@ -376,8 +447,11 @@ class FloatingDownloaderService : Service() {
                     Toast.makeText(this@FloatingDownloaderService, result.message, Toast.LENGTH_LONG).show()
                 }
                 is DownloadDetectionResult.InvalidLink -> {
-                    floatingBubbleView.showStatusMessage("⚠️ Tautan TikTok/YouTube tidak valid!", isError = true, durationMs = 3500)
-                    Toast.makeText(this@FloatingDownloaderService, "Teks di papan klip bukan link TikTok atau YouTube valid!", Toast.LENGTH_SHORT).show()
+                    vibrate(40)
+                    val preview = if (clipboardText.length > 28) clipboardText.take(28) + "..." else clipboardText
+                    val msg = "⚠️ Teks papan klip bukan link TikTok/YouTube valid: \"$preview\""
+                    floatingBubbleView.showStatusMessage("⚠️ Bukan link valid!", isError = true, durationMs = 3500)
+                    Toast.makeText(this@FloatingDownloaderService, msg, Toast.LENGTH_LONG).show()
                 }
             }
         }
@@ -415,7 +489,11 @@ class FloatingDownloaderService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
+        if (instance == this) {
+            instance = null
+        }
         _isServiceRunning.value = false
+        unregisterClipboardListener()
         serviceScope.cancel()
 
         try {
@@ -435,10 +513,35 @@ class FloatingDownloaderService : Service() {
         const val NOTIFICATION_ID = 2001
 
         const val ACTION_DETECT_CLIPBOARD = "com.ehan.app3.action.DETECT_CLIPBOARD"
+        const val ACTION_PROCESS_CAPTURED_TEXT = "com.ehan.app3.action.PROCESS_CAPTURED_TEXT"
         const val ACTION_STOP_SERVICE = "com.ehan.app3.action.STOP_FLOATING_SERVICE"
+        const val EXTRA_CAPTURED_TEXT = "extra_captured_text"
+
+        @Volatile
+        private var instance: FloatingDownloaderService? = null
 
         private val _isServiceRunning = MutableStateFlow(false)
         val isServiceRunning = _isServiceRunning.asStateFlow()
+
+        /**
+         * Dipanggil oleh ClipboardCaptureActivity saat berhasil membaca isi papan klip.
+         */
+        fun onClipboardCaptured(context: Context, text: String?) {
+            val current = instance
+            if (current != null) {
+                current.processCapturedClipboardText(text)
+            } else {
+                val intent = Intent(context, FloatingDownloaderService::class.java).apply {
+                    action = ACTION_PROCESS_CAPTURED_TEXT
+                    putExtra(EXTRA_CAPTURED_TEXT, text)
+                }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    context.startForegroundService(intent)
+                } else {
+                    context.startService(intent)
+                }
+            }
+        }
 
         fun canDrawOverlays(context: Context): Boolean {
             return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
