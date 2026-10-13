@@ -32,9 +32,12 @@ class TikTokCommand(
                 Status API Key: $keyStatus
 
                 Cara penggunaan:
-                • /tiktok <link_tiktok>
+                • /tiktok <link_tiktok> (vt.tiktok.com / tt.site / tiktok.com)
                 • /download <link_tiktok>
                 • Atau tempel langsung link TikTok ke chat!
+
+                Contoh:
+                /tiktok https://www.tt.site/t/ZSbEW9ejA/
 
                 Cara pasang API Key langsung dari chat:
                 • /apikey <key_tikwm_anda>

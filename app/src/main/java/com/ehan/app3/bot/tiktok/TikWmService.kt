@@ -11,7 +11,10 @@ import com.ehan.app3.bot.baileys.MediaSource
 import com.ehan.app3.bot.baileys.SendMessageOptions
 import com.ehan.app3.bot.baileys.SlideMediaItem
 import com.ehan.app3.bot.baileys.SlideMediaType
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
+import okhttp3.Request
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.text.SimpleDateFormat
@@ -25,6 +28,8 @@ class TikWmService {
     private val okHttpClient = OkHttpClient.Builder()
         .connectTimeout(20, TimeUnit.SECONDS)
         .readTimeout(25, TimeUnit.SECONDS)
+        .followRedirects(true)
+        .followSslRedirects(true)
         .build()
 
     private val api: TikWmApi = Retrofit.Builder()
@@ -33,6 +38,31 @@ class TikWmService {
         .addConverterFactory(GsonConverterFactory.create())
         .build()
         .create(TikWmApi::class.java)
+
+    /**
+     * Menyelesaikan redirect untuk shortlink seperti tt.site atau vt.tiktok.com
+     * agar mendapatkan full URL TikTok standar jika diperlukan oleh backend TikWM.
+     */
+    private suspend fun resolveFinalUrl(url: String): String {
+        val lower = url.lowercase()
+        if (!lower.contains("tt.site") && !lower.contains("vt.tiktok.com") && !lower.contains("vm.tiktok.com")) {
+            return url
+        }
+        return withContext(Dispatchers.IO) {
+            try {
+                val request = Request.Builder()
+                    .url(url)
+                    .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+                    .build()
+                okHttpClient.newCall(request).execute().use { response ->
+                    val finalUrl = response.request.url.toString()
+                    if (finalUrl.isNotBlank()) finalUrl else url
+                }
+            } catch (_: Exception) {
+                url
+            }
+        }
+    }
 
     /**
      * Mengambil data TikTok dari API dan langsung mengirimkannya via `sock.sendMessage`
@@ -56,7 +86,8 @@ class TikWmService {
                         ❌ URL TikTok tidak valid.
 
                         Contoh penggunaan:
-                        /tiktok https://vt.tiktok.com/ZSxxxxxx/
+                        • /tiktok https://vt.tiktok.com/ZSxxxxxx/
+                        • /tiktok https://www.tt.site/t/ZSbEW9ejA/
                     """.trimIndent(),
                     buttons = listOf(
                         BotButton(
@@ -71,15 +102,28 @@ class TikWmService {
             return
         }
 
+        val targetUrl = resolveFinalUrl(cleanUrl)
+
         val apiKey = getActiveApiKey()
         val isPlaceholderKey = apiKey.isEmpty()
 
         try {
-            val response = api.fetchTikTok(
-                url = cleanUrl,
+            var response = api.fetchTikTok(
+                url = targetUrl,
                 hd = "1",
                 apiKey = apiKey
             )
+
+            if (!response.isSuccessful && targetUrl != cleanUrl) {
+                val fallbackResponse = api.fetchTikTok(
+                    url = cleanUrl,
+                    hd = "1",
+                    apiKey = apiKey
+                )
+                if (fallbackResponse.isSuccessful) {
+                    response = fallbackResponse
+                }
+            }
 
             if (!response.isSuccessful) {
                 val keyHint = if (isPlaceholderKey) {
@@ -470,7 +514,12 @@ class TikWmService {
         fun extractTikTokUrl(input: String): String? {
             val match = URL_REGEX.find(input)?.value ?: return null
             val lower = match.lowercase()
-            return if (lower.contains("tiktok.com")) {
+            return if (
+                lower.contains("tiktok.com") ||
+                lower.contains("tt.site") ||
+                lower.contains("tiktokv.com") ||
+                lower.contains("douyin.com")
+            ) {
                 match
             } else {
                 null

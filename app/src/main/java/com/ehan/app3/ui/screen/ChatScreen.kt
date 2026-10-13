@@ -69,7 +69,8 @@ fun ChatScreen(
     viewModel: ChatViewModel,
     userPreferences: UserPreferences = UserPreferences(),
     onThemeModeChange: (String) -> Unit = {},
-    onAccentColorChange: (String) -> Unit = {}
+    onAccentColorChange: (String) -> Unit = {},
+    onOpenDrawer: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val clipboardManager = LocalClipboardManager.current
@@ -194,7 +195,8 @@ fun ChatScreen(
                     scope.launch {
                         snackbarHostState.showSnackbar("Riwayat percakapan dibersihkan")
                     }
-                }
+                },
+                onOpenDrawer = onOpenDrawer
             )
         },
         snackbarHost = {

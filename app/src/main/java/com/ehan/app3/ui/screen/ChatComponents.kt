@@ -49,6 +49,7 @@ import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.FormatPaint
 import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.LightMode
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
@@ -173,7 +174,11 @@ fun enqueueFileDownload(
     url: String,
     label: String,
     customFileName: String? = null,
-    onResult: (String) -> Unit
+    onResult: (String) -> Unit,
+    title: String? = null,
+    thumbnailUrl: String? = null,
+    fileSizeFormatted: String? = null,
+    sourcePlatform: String? = null
 ) {
     try {
         val ext = when {
@@ -183,6 +188,22 @@ fun enqueueFileDownload(
         }
         val fileName = customFileName?.trim()?.takeIf { it.isNotEmpty() }
             ?: "${System.currentTimeMillis()}.$ext"
+
+        val platform = sourcePlatform ?: when {
+            url.contains("tikwm", ignoreCase = true) || url.contains("tiktok", ignoreCase = true) -> "TIKTOK"
+            url.contains("youtube", ignoreCase = true) || url.contains("youtu.be", ignoreCase = true) ||
+                url.contains("naze", ignoreCase = true) || url.contains("converter", ignoreCase = true) ||
+                url.contains("123tokyo", ignoreCase = true) -> "YOUTUBE"
+            else -> "TIKTOK"
+        }
+
+        val type = when (ext) {
+            "mp3" -> "AUDIO"
+            "jpg", "jpeg", "png" -> "IMAGE"
+            else -> "VIDEO"
+        }
+
+        val itemTitle = title?.takeIf { it.isNotBlank() } ?: fileName
 
         val request = DownloadManager.Request(Uri.parse(url))
             .setTitle(fileName)
@@ -203,6 +224,17 @@ fun enqueueFileDownload(
             context.startActivity(intent)
             onResult("Membuka tautan unduhan di browser...")
         }
+
+        com.ehan.app3.data.DownloadedMediaRepository.recordDownload(
+            context = context,
+            title = itemTitle,
+            mediaType = type,
+            sourcePlatform = platform,
+            downloadUrl = url,
+            thumbnailUrl = thumbnailUrl,
+            fileSizeFormatted = fileSizeFormatted,
+            filePath = fileName
+        )
     } catch (e: Exception) {
         try {
             val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
@@ -229,7 +261,8 @@ fun ChatHeader(
     onToggleThemeStudio: () -> Unit,
     onThemeModeChange: (String) -> Unit,
     onAccentColorChange: (String) -> Unit,
-    onClearChat: () -> Unit
+    onClearChat: () -> Unit,
+    onOpenDrawer: () -> Unit = {}
 ) {
     val activePalette = AppPalette.fromKey(currentAccentColor)
     val isSelectionMode = selectedCount > 0
@@ -316,15 +349,32 @@ fun ChatHeader(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                    .padding(horizontal = 12.dp, vertical = 14.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                IconButton(
+                    onClick = onOpenDrawer,
+                    modifier = Modifier.testTag("open_drawer_button"),
+                    colors = IconButtonDefaults.iconButtonColors(
+                        containerColor = Color.White.copy(alpha = 0.2f),
+                        contentColor = Color.White
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Menu,
+                        contentDescription = "Buka menu navigasi"
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(8.dp))
+
                 Box(
                     modifier = Modifier
                         .size(46.dp)
                         .clip(CircleShape)
                         .background(Color.White.copy(alpha = 0.22f))
-                        .border(1.5.dp, Color.White.copy(alpha = 0.6f), CircleShape),
+                        .border(1.5.dp, Color.White.copy(alpha = 0.6f), CircleShape)
+                        .clickable { onOpenDrawer() },
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
