@@ -1,9 +1,12 @@
 package com.ehan.app3.ui.screen
 
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Environment
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -37,11 +40,13 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Audiotrack
 import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.OpenInNew
@@ -423,6 +428,7 @@ fun MediaItemCard(
     onShare: () -> Unit,
     onDelete: () -> Unit
 ) {
+    val context = LocalContext.current
     val dateStr = remember(media.timestamp) {
         try {
             val sdf = SimpleDateFormat("dd MMM yyyy, HH:mm", Locale("id", "ID"))
@@ -572,6 +578,37 @@ fun MediaItemCard(
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
                     )
+
+                    if (media.downloadUrl.isNotBlank()) {
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(accentColor.copy(alpha = 0.1f))
+                                .clickable {
+                                    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+                                    clipboard?.setPrimaryClip(ClipData.newPlainText("Link", media.downloadUrl))
+                                    Toast.makeText(context, "Link disalin ke clipboard", Toast.LENGTH_SHORT).show()
+                                }
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Link,
+                                contentDescription = "Tautan",
+                                tint = accentColor,
+                                modifier = Modifier.size(13.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = media.downloadUrl,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = accentColor,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
                 }
             }
 
@@ -655,6 +692,7 @@ fun MediaPreviewDialog(
     onOpenInApp: () -> Unit,
     onShare: () -> Unit
 ) {
+    val context = LocalContext.current
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false)
@@ -720,8 +758,17 @@ fun MediaPreviewDialog(
                 ) {
                     when (media.mediaType.uppercase()) {
                         "VIDEO" -> {
+                            val localFile = media.filePath?.let { path ->
+                                val f = File(path)
+                                if (f.exists()) f else File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), f.name)
+                            }
+                            val videoPlayUrl = if (localFile != null && localFile.exists()) {
+                                Uri.fromFile(localFile).toString()
+                            } else {
+                                media.downloadUrl
+                            }
                             InlineVideoPlayer(
-                                videoUrl = media.downloadUrl,
+                                videoUrl = videoPlayUrl,
                                 thumbnailUrl = media.thumbnailUrl,
                                 fileName = media.filePath ?: media.title,
                                 badgeLabel = "${media.sourcePlatform} VIDEO",
@@ -731,8 +778,17 @@ fun MediaPreviewDialog(
                             )
                         }
                         "IMAGE" -> {
+                            val localFile = media.filePath?.let { path ->
+                                val f = File(path)
+                                if (f.exists()) f else File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), f.name)
+                            }
+                            val imageModel: Any = if (localFile != null && localFile.exists()) {
+                                localFile
+                            } else {
+                                media.thumbnailUrl ?: media.downloadUrl
+                            }
                             AsyncImage(
-                                model = media.downloadUrl,
+                                model = imageModel,
                                 contentDescription = media.title,
                                 modifier = Modifier.fillMaxSize(),
                                 contentScale = ContentScale.Fit
@@ -795,6 +851,50 @@ fun MediaPreviewDialog(
                     }
                 }
 
+                // Tampilan Link Pengguna di Dialog
+                if (media.downloadUrl.isNotBlank()) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 6.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color.White.copy(alpha = 0.1f))
+                            .padding(horizontal = 10.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Link,
+                            contentDescription = null,
+                            tint = accentColor,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = media.downloadUrl,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.White.copy(alpha = 0.9f),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f)
+                        )
+                        IconButton(
+                            onClick = {
+                                val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+                                clipboard?.setPrimaryClip(ClipData.newPlainText("Link", media.downloadUrl))
+                                Toast.makeText(context, "Link disalin ke clipboard", Toast.LENGTH_SHORT).show()
+                            },
+                            modifier = Modifier.size(28.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ContentCopy,
+                                contentDescription = "Salin Tautan",
+                                tint = Color.White,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    }
+                }
+
                 // Bottom Bar
                 Row(
                     modifier = Modifier
@@ -840,10 +940,14 @@ fun MediaPreviewDialog(
 
 private fun openMediaFileOrUrl(context: Context, media: DownloadedMedia) {
     try {
-        // Cek apakah berkas ada di direktori Downloads publik
+        // Cek apakah berkas ada di penyimpanan publik Downloads
         val fileName = media.filePath
         if (!fileName.isNullOrBlank()) {
-            val file = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), fileName)
+            val file = if (fileName.startsWith("/")) {
+                File(fileName)
+            } else {
+                File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), fileName)
+            }
             if (file.exists()) {
                 val mimeType = when (media.mediaType.uppercase()) {
                     "VIDEO" -> "video/*"
@@ -861,7 +965,7 @@ private fun openMediaFileOrUrl(context: Context, media: DownloadedMedia) {
             }
         }
 
-        // Fallback buka URL di browser/pemutar eksternal
+        // Fallback buka URL yang dikirim pengguna di browser / aplikasi terkait
         val intent = Intent(Intent.ACTION_VIEW, Uri.parse(media.downloadUrl)).apply {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
@@ -885,7 +989,7 @@ private fun shareMedia(context: Context, media: DownloadedMedia) {
             putExtra(Intent.EXTRA_SUBJECT, media.title)
             putExtra(
                 Intent.EXTRA_TEXT,
-                "🎬 ${media.title}\n\nUnduh media ${media.sourcePlatform} di sini:\n${media.downloadUrl}"
+                "🎬 ${media.title}\n\nLink: ${media.downloadUrl}"
             )
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }

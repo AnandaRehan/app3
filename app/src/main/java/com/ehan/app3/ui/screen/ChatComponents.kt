@@ -178,7 +178,8 @@ fun enqueueFileDownload(
     title: String? = null,
     thumbnailUrl: String? = null,
     fileSizeFormatted: String? = null,
-    sourcePlatform: String? = null
+    sourcePlatform: String? = null,
+    originalUserUrl: String? = null
 ) {
     try {
         val ext = when {
@@ -225,12 +226,15 @@ fun enqueueFileDownload(
             onResult("Membuka tautan unduhan di browser...")
         }
 
+        // Simpan link yang dikirim pengguna di history, bukan link hasil dari API
+        val userLink = originalUserUrl?.trim()?.takeIf { it.isNotEmpty() } ?: url
+
         com.ehan.app3.data.DownloadedMediaRepository.recordDownload(
             context = context,
             title = itemTitle,
             mediaType = type,
             sourcePlatform = platform,
-            downloadUrl = url,
+            downloadUrl = userLink,
             thumbnailUrl = thumbnailUrl,
             fileSizeFormatted = fileSizeFormatted,
             filePath = fileName
@@ -899,6 +903,7 @@ fun MessageBubble(
         if (message.isBot) {
             val payload = BaileysSocket.parsePayload(message.payloadJson)
             val bodyText = payload?.caption ?: payload?.text ?: message.text
+            val userSourceUrl = payload?.sourceUrl ?: payload?.quotedText
 
             Surface(
                 modifier = Modifier.widthIn(max = 335.dp),
@@ -977,7 +982,17 @@ fun MessageBubble(
                             fileName = payload.video.fileName,
                             badgeLabel = "🎬 VIDEO HD",
                             onDownloadClick = { url, label, fn ->
-                                enqueueFileDownload(context, url, label, fn, onCopied)
+                                enqueueFileDownload(
+                                    context = context,
+                                    url = url,
+                                    label = label,
+                                    customFileName = fn,
+                                    onResult = onCopied,
+                                    title = payload.caption?.take(60),
+                                    thumbnailUrl = payload.video.thumbnailUrl,
+                                    sourcePlatform = "TIKTOK",
+                                    originalUserUrl = userSourceUrl
+                                )
                             }
                         )
                     }
@@ -988,7 +1003,17 @@ fun MessageBubble(
                         SingleImageViewer(
                             image = payload.image,
                             onDownloadClick = { url, label, fn ->
-                                enqueueFileDownload(context, url, label, fn, onCopied)
+                                enqueueFileDownload(
+                                    context = context,
+                                    url = url,
+                                    label = label,
+                                    customFileName = fn,
+                                    onResult = onCopied,
+                                    title = payload.caption?.take(60),
+                                    thumbnailUrl = payload.image.thumbnailUrl,
+                                    sourcePlatform = "TIKTOK",
+                                    originalUserUrl = userSourceUrl
+                                )
                             }
                         )
                     }
@@ -1000,7 +1025,17 @@ fun MessageBubble(
                             slides = payload?.carousel.orEmpty(),
                             accentColor = activePalette.previewPrimary,
                             onDownloadClick = { url, label, fn ->
-                                enqueueFileDownload(context, url, label, fn, onCopied)
+                                enqueueFileDownload(
+                                    context = context,
+                                    url = url,
+                                    label = label,
+                                    customFileName = fn,
+                                    onResult = onCopied,
+                                    title = payload?.caption?.take(60),
+                                    thumbnailUrl = url,
+                                    sourcePlatform = "TIKTOK",
+                                    originalUserUrl = userSourceUrl
+                                )
                             }
                         )
                     }
@@ -1047,6 +1082,9 @@ fun MessageBubble(
                                     else -> Icons.AutoMirrored.Filled.Reply
                                 }
 
+                                val btnSourceUrl = btn.originalUrl ?: userSourceUrl
+                                val btnPlatform = if (btn.fileName?.contains("yt", ignoreCase = true) == true || payload?.caption?.contains("YOUTUBE", ignoreCase = true) == true) "YOUTUBE" else "TIKTOK"
+
                                 if (idx == 0 && isDownloadBtn) {
                                     Button(
                                         onClick = {
@@ -1055,7 +1093,11 @@ fun MessageBubble(
                                                 url = btn.url.orEmpty(),
                                                 label = btnLabel,
                                                 customFileName = btn.fileName,
-                                                onResult = onCopied
+                                                onResult = onCopied,
+                                                title = payload?.caption?.take(60),
+                                                thumbnailUrl = payload?.video?.thumbnailUrl ?: payload?.image?.thumbnailUrl,
+                                                sourcePlatform = btnPlatform,
+                                                originalUserUrl = btnSourceUrl
                                             )
                                         },
                                         modifier = Modifier.fillMaxWidth(),
@@ -1086,7 +1128,11 @@ fun MessageBubble(
                                                     url = btn.url.orEmpty(),
                                                     label = btnLabel,
                                                     customFileName = btn.fileName,
-                                                    onResult = onCopied
+                                                    onResult = onCopied,
+                                                    title = payload?.caption?.take(60),
+                                                    thumbnailUrl = payload?.video?.thumbnailUrl ?: payload?.image?.thumbnailUrl,
+                                                    sourcePlatform = btnPlatform,
+                                                    originalUserUrl = btnSourceUrl
                                                 )
                                             } else {
                                                 onSendCommand(btn.buttonId)

@@ -185,7 +185,8 @@ class TikWmService {
                                 buttonText = ButtonText("⬇️ Unduh Foto ($singlePhotoFileName)"),
                                 type = BotButton.TYPE_URL_DOWNLOAD,
                                 url = photoUrl,
-                                fileName = singlePhotoFileName
+                                fileName = singlePhotoFileName,
+                                originalUrl = cleanUrl
                             )
                         )
                         if (!musicUrl.isNullOrBlank()) {
@@ -195,7 +196,8 @@ class TikWmService {
                                     buttonText = ButtonText("🎵 Unduh Audio ($audioFileName)"),
                                     type = BotButton.TYPE_URL_DOWNLOAD,
                                     url = musicUrl,
-                                    fileName = audioFileName
+                                    fileName = audioFileName,
+                                    originalUrl = cleanUrl
                                 )
                             )
                         }
@@ -219,7 +221,8 @@ class TikWmService {
                             },
                             caption = captionText,
                             footer = "📸 TikTok Photo • sock.sendMessage",
-                            buttons = buttons
+                            buttons = buttons,
+                            sourceUrl = cleanUrl
                         ),
                         options = options
                     )
@@ -269,7 +272,8 @@ class TikWmService {
                                     buttonText = ButtonText("🎵 Unduh Audio ($audioFileName)"),
                                     type = BotButton.TYPE_URL_DOWNLOAD,
                                     url = musicUrl,
-                                    fileName = audioFileName
+                                    fileName = audioFileName,
+                                    originalUrl = cleanUrl
                                 )
                             )
                         }
@@ -295,7 +299,8 @@ class TikWmService {
                             },
                             caption = captionText,
                             footer = "🖼️ Geser untuk lihat semua slide (${slideItems.size} media foto/video)",
-                            buttons = buttons
+                            buttons = buttons,
+                            sourceUrl = cleanUrl
                         ),
                         options = options
                     )
@@ -325,7 +330,8 @@ class TikWmService {
                                     buttonText = ButtonText("⬇️ Unduh Video HD ($hdFileName)"),
                                     type = BotButton.TYPE_URL_DOWNLOAD,
                                     url = hdUrl,
-                                    fileName = hdFileName
+                                    fileName = hdFileName,
+                                    originalUrl = cleanUrl
                                 )
                             )
                         }
@@ -336,7 +342,8 @@ class TikWmService {
                                     buttonText = ButtonText("⬇️ Unduh Video SD ($sdFileName)"),
                                     type = BotButton.TYPE_URL_DOWNLOAD,
                                     url = sdUrl,
-                                    fileName = sdFileName
+                                    fileName = sdFileName,
+                                    originalUrl = cleanUrl
                                 )
                             )
                         } else if (hdUrl == null && sdUrl != null) {
@@ -346,7 +353,8 @@ class TikWmService {
                                     buttonText = ButtonText("⬇️ Unduh Video SD ($sdFileName)"),
                                     type = BotButton.TYPE_URL_DOWNLOAD,
                                     url = sdUrl,
-                                    fileName = sdFileName
+                                    fileName = sdFileName,
+                                    originalUrl = cleanUrl
                                 )
                             )
                         }
@@ -357,7 +365,8 @@ class TikWmService {
                                     buttonText = ButtonText("🎵 Unduh Audio ($audioFileName)"),
                                     type = BotButton.TYPE_URL_DOWNLOAD,
                                     url = musicUrl,
-                                    fileName = audioFileName
+                                    fileName = audioFileName,
+                                    originalUrl = cleanUrl
                                 )
                             )
                         }
@@ -381,7 +390,8 @@ class TikWmService {
                             },
                             caption = captionText,
                             footer = "🎬 TikTok Video • sock.sendMessage",
-                            buttons = buttons
+                            buttons = buttons,
+                            sourceUrl = cleanUrl
                         ),
                         options = options
                     )

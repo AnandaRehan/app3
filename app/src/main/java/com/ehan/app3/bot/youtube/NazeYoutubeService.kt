@@ -166,7 +166,8 @@ class NazeYoutubeService {
                         buttonText = ButtonText("⬇️ Unduh Video MP4 ($videoFileName)"),
                         type = BotButton.TYPE_URL_DOWNLOAD,
                         url = result.downloadUrl,
-                        fileName = videoFileName
+                        fileName = videoFileName,
+                        originalUrl = cleanUrl
                     )
                 )
                 if (mp3Link != null) {
@@ -177,7 +178,8 @@ class NazeYoutubeService {
                             buttonText = ButtonText("🎵 Download Audio MP3$sizeBadge"),
                             type = BotButton.TYPE_URL_DOWNLOAD,
                             url = mp3Link,
-                            fileName = audioFileName
+                            fileName = audioFileName,
+                            originalUrl = cleanUrl
                         )
                     )
                 } else {
@@ -209,7 +211,8 @@ class NazeYoutubeService {
                     },
                     caption = captionText,
                     footer = "▶️ YouTube Downloader • naze.dev API",
-                    buttons = buttons
+                    buttons = buttons,
+                    sourceUrl = cleanUrl
                 ),
                 options = options
             )
@@ -333,14 +336,16 @@ class NazeYoutubeService {
                             buttonText = ButtonText("🎵 Unduh Audio MP3 ($audioFileName)"),
                             type = BotButton.TYPE_URL_DOWNLOAD,
                             url = result.link,
-                            fileName = audioFileName
+                            fileName = audioFileName,
+                            originalUrl = cleanUrl
                         ),
                         BotButton(
                             buttonId = "/yt $cleanUrl",
                             buttonText = ButtonText("🎬 Ambil Versi Video MP4"),
                             type = BotButton.TYPE_REPLY
                         )
-                    )
+                    ),
+                    sourceUrl = cleanUrl
                 ),
                 options = options
             )

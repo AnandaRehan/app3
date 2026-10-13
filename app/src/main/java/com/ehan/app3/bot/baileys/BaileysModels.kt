@@ -54,7 +54,8 @@ data class BotButton(
     val buttonText: ButtonText,
     val type: Int = 1,
     val url: String? = null,
-    val fileName: String? = null
+    val fileName: String? = null,
+    val originalUrl: String? = null
 ) {
     companion object {
         const val TYPE_REPLY = 1
@@ -77,7 +78,8 @@ data class BotMessageContent(
     val buttons: List<BotButton>? = null,
     val headerType: Int = 1,
     val quotedMessageId: Long? = null,
-    val quotedText: String? = null
+    val quotedText: String? = null,
+    val sourceUrl: String? = null
 )
 
 /**

@@ -27,6 +27,7 @@ import android.view.WindowManager
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import com.ehan.app3.MainActivity
+import com.ehan.app3.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -143,12 +144,12 @@ class FloatingDownloaderService : Service() {
         val notification: Notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("App3 Downloader Melayang Aktif")
             .setContentText("Ketuk bubble melayang untuk download otomatis link dari clipboard")
-            .setSmallIcon(android.R.drawable.stat_sys_download)
+            .setSmallIcon(R.drawable.ic_popup_notification)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setOngoing(true)
             .setContentIntent(openAppPendingIntent)
-            .addAction(android.R.drawable.stat_sys_download, "📥 Deteksi & Unduh", detectPendingIntent)
-            .addAction(android.R.drawable.ic_menu_close_clear_cancel, "❌ Nonaktifkan", stopPendingIntent)
+            .addAction(R.drawable.ic_detect_link, "🔗 Deteksi & Unduh", detectPendingIntent)
+            .addAction(R.drawable.ic_close_notification, "❌ Nonaktifkan", stopPendingIntent)
             .build()
 
         startForeground(NOTIFICATION_ID, notification)

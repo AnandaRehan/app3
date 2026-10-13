@@ -107,7 +107,8 @@ class FloatingDownloadProcessor(private val context: Context) {
                         title = "$title (Slide ${index + 1})",
                         thumbnailUrl = imgUrl,
                         sourcePlatform = "TIKTOK",
-                        mediaType = "IMAGE"
+                        mediaType = "IMAGE",
+                        userOriginalUrl = targetUrl
                     )
                 }
                 DownloadDetectionResult.Success(
@@ -132,7 +133,8 @@ class FloatingDownloadProcessor(private val context: Context) {
                     title = title,
                     thumbnailUrl = data.cover ?: data.originCover,
                     sourcePlatform = "TIKTOK",
-                    mediaType = "VIDEO"
+                    mediaType = "VIDEO",
+                    userOriginalUrl = targetUrl
                 )
 
                 DownloadDetectionResult.Success(
@@ -181,7 +183,8 @@ class FloatingDownloadProcessor(private val context: Context) {
                 title = rawTitle,
                 thumbnailUrl = null,
                 sourcePlatform = "YOUTUBE",
-                mediaType = "VIDEO"
+                mediaType = "VIDEO",
+                userOriginalUrl = targetUrl
             )
 
             DownloadDetectionResult.Success(
@@ -200,7 +203,8 @@ class FloatingDownloadProcessor(private val context: Context) {
         title: String,
         thumbnailUrl: String?,
         sourcePlatform: String,
-        mediaType: String
+        mediaType: String,
+        userOriginalUrl: String
     ) {
         try {
             val request = DownloadManager.Request(Uri.parse(url))
@@ -214,13 +218,13 @@ class FloatingDownloadProcessor(private val context: Context) {
             val dm = context.getSystemService(Context.DOWNLOAD_SERVICE) as? DownloadManager
             dm?.enqueue(request)
 
-            // Catat ke Room Database
+            // Catat ke Room Database dengan link yang dikirim pengguna (bukan link hasil dari API)
             DownloadedMediaRepository.recordDownload(
                 context = context,
                 title = title,
                 mediaType = mediaType,
                 sourcePlatform = sourcePlatform,
-                downloadUrl = url,
+                downloadUrl = userOriginalUrl.ifBlank { url },
                 thumbnailUrl = thumbnailUrl,
                 fileSizeFormatted = null,
                 durationFormatted = null,
