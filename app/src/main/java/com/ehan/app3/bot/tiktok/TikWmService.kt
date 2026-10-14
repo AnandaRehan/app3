@@ -43,26 +43,6 @@ class TikWmService {
      * Menyelesaikan redirect untuk shortlink seperti tt.site atau vt.tiktok.com
      * agar mendapatkan full URL TikTok standar jika diperlukan oleh backend TikWM.
      */
-    private suspend fun resolveFinalUrl(url: String): String {
-        val lower = url.lowercase()
-        if (!lower.contains("tt.site") && !lower.contains("vt.tiktok.com") && !lower.contains("vm.tiktok.com")) {
-            return url
-        }
-        return withContext(Dispatchers.IO) {
-            try {
-                val request = Request.Builder()
-                    .url(url)
-                    .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
-                    .build()
-                okHttpClient.newCall(request).execute().use { response ->
-                    val finalUrl = response.request.url.toString()
-                    if (finalUrl.isNotBlank()) finalUrl else url
-                }
-            } catch (_: Exception) {
-                url
-            }
-        }
-    }
 
     /**
      * Mengambil data TikTok dari API dan langsung mengirimkannya via `sock.sendMessage`
@@ -551,6 +531,27 @@ class TikWmService {
 
         fun containsTikTokUrl(input: String): Boolean {
             return extractTikTokUrl(input) != null
+        }
+
+        suspend fun resolveFinalUrl(url: String): String {
+            val lower = url.lowercase()
+            if (!lower.contains("tt.site") && !lower.contains("vt.tiktok.com") && !lower.contains("vm.tiktok.com")) {
+                return url
+            }
+            return withContext(Dispatchers.IO) {
+                try {
+                    val request = Request.Builder()
+                        .url(url)
+                        .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+                        .build()
+                    okHttpClient.newCall(request).execute().use { response ->
+                        val finalUrl = response.request.url.toString()
+                        if (finalUrl.isNotBlank()) finalUrl else url
+                    }
+                } catch (_: Exception) {
+                        url
+                }
+            }
         }
     }
 }
