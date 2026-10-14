@@ -112,7 +112,7 @@ class FloatingDownloadProcessor(private val context: Context) {
                 val err = body?.error ?: body?.msg ?: "Gagal memproses link TikTok"
                 return when (abc) {
                     null -> {
-                        processTikTokDownload(targetUrl, abc = "last", finalUrl = tikServ.resolveFinalUrl(targetUrl))
+                        processTikTokDownload(targetUrl, abc = "last", _finalUrl = tikServ.resolveFinalUrl(targetUrl))
                     }
                     "last" -> {
                         DownloadDetectionResult.Error(err)
