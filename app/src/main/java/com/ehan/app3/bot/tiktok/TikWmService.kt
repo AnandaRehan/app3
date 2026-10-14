@@ -161,7 +161,7 @@ class TikWmService {
             }
 
             val data = hasil.data
-            val captionText = buildTikTokCaption(data) + "\n" + targetUrl + "\n" + cleanUrl + "\n" + rawUrl
+            val captionText = buildTikTokCaption(data)
 
             // ID utama untuk penamaan file: data.id -> data.aweme_id -> System.currentTimeMillis() (Date.now())
             val baseMediaId = resolveMediaId(data)
