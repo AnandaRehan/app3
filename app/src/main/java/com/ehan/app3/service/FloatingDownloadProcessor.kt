@@ -76,7 +76,7 @@ class FloatingDownloadProcessor(private val context: Context) {
     private suspend fun processTikTokDownload(targetUrl: String): DownloadDetectionResult {
         return try {
             val tikServ: TikWmService = TikWmService()
-            val apiKey = tikServ.getActiveApiKey()
+            val apiKey = TikWmService.getActiveApiKey()
 
             val finalUrl = tikServ.resolveFinalUrl(targetUrl)
             val response = tikWmApi.fetchTikTok(
@@ -96,7 +96,7 @@ class FloatingDownloadProcessor(private val context: Context) {
                 return DownloadDetectionResult.Error(err)
             }
 
-            val baseId = tikServ.resolveMediaId(data)
+            val baseId = TikWmService.resolveMediaId(data)
             val title = data.title?.takeIf { it.isNotBlank() } ?: "TikTok Video $baseId"
 
             val images = data.images.orEmpty().filter { it.isNotBlank() }
