@@ -433,7 +433,7 @@ class FloatingDownloaderService : Service() {
 
             // Proses tautan lewat DownloadProcessor (TikTok SD No-Watermark atau YouTube)
             val result = downloadProcessor.processClipboardText(clipboardText)
-
+            
             floatingBubbleView.setLoading(false)
             when (result) {
                 is DownloadDetectionResult.Success -> {
@@ -444,6 +444,9 @@ class FloatingDownloaderService : Service() {
                 }
                 is DownloadDetectionResult.Error -> {
                     vibrate(50)
+                
+                    Toast.makeText(this@FloatingDownloaderService, clipboardText, Toast.LENGTH_LONG).show()
+    
                     floatingBubbleView.showStatusMessage("❌ ${result.message}", isError = true, durationMs = 4000)
                     Toast.makeText(this@FloatingDownloaderService, result.message, Toast.LENGTH_LONG).show()
                 }

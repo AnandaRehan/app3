@@ -75,6 +75,7 @@ class FloatingDownloadProcessor(private val context: Context) {
 
     private suspend fun processTikTokDownload(targetUrl: String): DownloadDetectionResult {
         return try {
+            showToast("processYouTubeDownload" + targetUrl)
             val apiKey = TikWmService.getActiveApiKey()
             val response = tikWmApi.fetchTikTok(
                 url = targetUrl,
