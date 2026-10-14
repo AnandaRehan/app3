@@ -444,9 +444,6 @@ class FloatingDownloaderService : Service() {
                 }
                 is DownloadDetectionResult.Error -> {
                     vibrate(50)
-                
-                    Toast.makeText(this@FloatingDownloaderService, clipboardText, Toast.LENGTH_LONG).show()
-    
                     floatingBubbleView.showStatusMessage("❌ ${result.message}", isError = true, durationMs = 4000)
                     Toast.makeText(this@FloatingDownloaderService, result.message, Toast.LENGTH_LONG).show()
                 }

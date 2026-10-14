@@ -65,10 +65,9 @@ class FloatingDownloadProcessor(private val context: Context) {
 
         val tiktokUrl = TikWmService.extractTikTokUrl(cleanText)
         val youtubeUrl = NazeYoutubeService.extractYouTubeUrl(cleanText)
-        
-        val tikServ: TikWmService = TikWmService()
+
         when {
-            tiktokUrl != null -> processTikTokDownload(tikServ.resolveFinalUrl(tiktokUrl))
+            tiktokUrl != null -> processTikTokDownload(tiktokUrl)
             youtubeUrl != null -> processYouTubeDownload(youtubeUrl)
             else -> DownloadDetectionResult.InvalidLink
         }
@@ -76,10 +75,12 @@ class FloatingDownloadProcessor(private val context: Context) {
 
     private suspend fun processTikTokDownload(targetUrl: String): DownloadDetectionResult {
         return try {
-            showToast("processYouTubeDownload" + targetUrl)
-            val apiKey = TikWmService.getActiveApiKey()
+            val tikServ: TikWmService = TikWmService()
+            val apiKey = tikServ.getActiveApiKey()
+
+            val finalUrl = tikServ.resolveFinalUrl(targetUrl)
             val response = tikWmApi.fetchTikTok(
-                url = targetUrl,
+                url = finalUrl,
                 hd = "0", // Tidak memprioritaskan HD, ambil SD biasa no-watermark
                 apiKey = apiKey
             )
@@ -95,7 +96,7 @@ class FloatingDownloadProcessor(private val context: Context) {
                 return DownloadDetectionResult.Error(err)
             }
 
-            val baseId = TikWmService.resolveMediaId(data)
+            val baseId = tikServ.resolveMediaId(data)
             val title = data.title?.takeIf { it.isNotBlank() } ?: "TikTok Video $baseId"
 
             val images = data.images.orEmpty().filter { it.isNotBlank() }
