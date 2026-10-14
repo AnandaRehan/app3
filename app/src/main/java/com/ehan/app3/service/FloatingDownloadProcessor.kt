@@ -63,13 +63,11 @@ class FloatingDownloadProcessor(private val context: Context) {
             return@withContext DownloadDetectionResult.InvalidLink
         }
 
-        val _tiktokUrl = TikWmService.extractTikTokUrl(cleanText)
+        val tiktokUrl = TikWmService.extractTikTokUrl(cleanText)
         val youtubeUrl = NazeYoutubeService.extractYouTubeUrl(cleanText)
 
-        val tiktokUrl = if (_tiktokUrl != null) TikWmService.resolveFinalUrl(_tiktokUrl) else null
-
         when {
-            tiktokUrl != null -> processTikTokDownload(tiktokUrl)
+            tiktokUrl != null -> processTikTokDownload(TikWmService.resolveFinalUrl(tiktokUrl))
             youtubeUrl != null -> processYouTubeDownload(youtubeUrl)
             else -> DownloadDetectionResult.InvalidLink
         }
