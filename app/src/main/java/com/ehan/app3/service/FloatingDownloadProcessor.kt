@@ -73,14 +73,31 @@ class FloatingDownloadProcessor(private val context: Context) {
         }
     }
 
-    private suspend fun processTikTokDownload(targetUrl: String): DownloadDetectionResult {
+    private suspend fun processTikTokDownload(targetUrl: String, abc: String? = null, _finalUrl: String? = null): DownloadDetectionResult {
         return try {
             val tikServ: TikWmService = TikWmService()
             val apiKey = TikWmService.getActiveApiKey()
-
-            val finalUrl = tikServ.resolveFinalUrl(targetUrl)
+            val finalUrl = run {
+                if (_finalUrl == null) {
+                    val cleanUrl = targetUrl.trim().trimEnd('.', ',', ')', ']', '}', '"', '\'', ';', ':')
+                    val lower = cleanUrl.lowercase()
+                    if (
+                        lower.contains("tt.site")
+                    ) {
+                        val tikTokId = targetUrl
+                            .removeSuffix("/")        // Menghapus '/' di paling akhir jika ada
+                            .substringAfterLast('/')  // Mengambil teks setelah '/' terakhir yang tersisa
+                            .substringBefore('?')     // (Opsional) Mengamankan jika ada parameter ?share=...
+                        "https://vt.tiktok.com/${tikTokId}/"
+                    } else {
+                        null
+                    }
+                } else {
+                    _finalUrl
+                }
+            }
             val response = tikWmApi.fetchTikTok(
-                url = finalUrl,
+                url = if (!finalUrl.isNullOrBlank()) finalUrl else targetUrl,
                 hd = "0", // Tidak memprioritaskan HD, ambil SD biasa no-watermark
                 apiKey = apiKey
             )
@@ -93,7 +110,17 @@ class FloatingDownloadProcessor(private val context: Context) {
             val data = body?.data
             if (body == null || body.msg != "success" || data == null) {
                 val err = body?.error ?: body?.msg ?: "Gagal memproses link TikTok"
-                return DownloadDetectionResult.Error(err)
+                return when (abc) {
+                    null -> {
+                        processTikTokDownload(targetUrl, abc = "last", finalUrl = tikServ.resolveFinalUrl(targetUrl))
+                    }
+                    "last" -> {
+                        DownloadDetectionResult.Error(err)
+                    }
+                    else -> {
+                        DownloadDetectionResult.Error(err)
+                    }
+                }
             }
 
             val baseId = TikWmService.resolveMediaId(data)
